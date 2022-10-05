@@ -1,0 +1,35 @@
+name: Initialize Runner
+
+on:
+  workflow_call:
+
+jobs:
+  initialize_runner:
+    name: Initialize
+    runs-on: ubuntu-latest # Using a linux runner
+
+    steps:
+
+    # Checks out the current repository
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    # Allows use of some extra context env vars e.g., $CI_SHA_SHORT
+    - name: set-env-vars
+      uses: FranzDiebold/github-env-vars-action@v2
+
+    # Helm is required to generate the manifests
+    - name: Install Helm
+      run: |
+        wget https://get.helm.sh/helm-v3.9.1-linux-amd64.tar.gz
+        tar xvf helm-v3.9.1-linux-amd64.tar.gz
+        sudo mv linux-amd64/helm /usr/local/bin
+        echo "Installed helm"
+
+    # Install yq - yaml processor
+    - name: Install yq
+      run: |
+        sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+        sudo chmod a+x /usr/local/bin/yq
+        yq --version
+        echo "Installed yq"

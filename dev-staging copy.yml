@@ -1,0 +1,42 @@
+name: Deploy to Dev/Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      choice:
+        type: choice
+        description: Select an Environment
+        options:
+        - alpha
+        - devopsTest
+        - dev
+
+jobs:
+
+  call-build-and-push-image:
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/build-and-push-image-to-ecr.yml@main
+    with:
+      image_tag: ${{ github.ref_name }}
+      ecr_repository: ${{ secrets.ECR_REPOSITORY }}
+    secrets:
+      access_key_id: ${{ secrets.CODESPARK_AWS_ACCESS_KEY_ID }}
+      secret_access_key: ${{ secrets.CODESPARK_AWS_SECRET_ACCESS_KEY }}
+      aws_region: ${{ secrets.CODESPARK_AWS_REGION }}
+
+  call-deploy-to-k8s:
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/deploy-to-k8s.yml@main
+    with:
+      app_env: ${{ github.event.inputs.choice }}
+      helm_path: ${{ github.workspace }}/k8s/helm-chart/codespark-${{ secrets.ECR_REPOSITORY }}
+      image_tag: ${{ github.ref_name }}
+      ecr_repository: ${{ secrets.ECR_REPOSITORY }}
+    secrets:
+      kubeconfig: ${{ secrets.CODESPARK_KUBECONFIG_STAGING }}
+
+  call-slack-notify:
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/slack-notify.yml@main
+    with:
+      app_env: ${{ github.event.inputs.choice }}
+      slack_channel: eng-platform-services
+    secrets:
+      slack_bot_token: ${{ secrets.CODESPARK_SLACK_BOT_TOKEN }}

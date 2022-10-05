@@ -1,0 +1,96 @@
+name: Deploy to k8s
+
+on:
+  workflow_call:
+    inputs:
+      app_env:
+        required: true
+        type: string
+      helm_path:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+      ecr_repository:
+        required: true
+        type: string
+    secrets:
+      kubeconfig:
+        required: true
+  
+
+jobs:
+  deploy_to_k8s:
+    name: Deploy
+    runs-on: ubuntu-latest # Using a linux runner
+
+    # Setting environment variables
+    env:
+      ECR_REPOSITORY: ${{ secrets.ecr_repository }}
+      IMAGE_TAG: ${{ inputs.image_tag }}
+      HELM_PATH: ${{ inputs.helm_path }}
+
+    steps:
+
+    # Set kubeconfig context for Staging cluster
+    - name: Set Kubeconfig
+      uses: azure/k8s-set-context@v2
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.kubeconfig }}
+
+    # Helm is required to generate the manifests
+    - name: Install Helm
+      run: |
+        wget https://get.helm.sh/helm-v3.9.1-linux-amd64.tar.gz
+        tar xvf helm-v3.9.1-linux-amd64.tar.gz
+        sudo mv linux-amd64/helm /usr/local/bin
+        echo "Installed helm"
+
+    # Install yq - yaml processor
+    - name: Install yq
+      run: |
+        sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+        sudo chmod a+x /usr/local/bin/yq
+        yq --version
+        echo "Installed yq"
+
+    # Checks out the current repository
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    # Allows use of some extra context env vars e.g., $CI_SHA_SHORT
+    - name: set-env-vars
+      uses: FranzDiebold/github-env-vars-action@v2
+
+    # This generates the deployment manifests for specified environment
+    - name: Generate manifest for '${{ inputs.app_env }}'
+      run: |
+        export DEPLOY_NAME=$(yq e '.name' $HELM_PATH/values.yaml)
+
+        [ ${{ inputs.app_env }} == devopsTest ] && export echo "app_env=dev" >> $GITHUB_ENV
+        echo "app_env: $app_env"
+        export NAMESPACE=$(yq e '.namespace' $HELM_PATH/values-$app_env.yaml)
+        export REPLICAS=$(kubectl get deployment $DEPLOY_NAME-$NAMESPACE -n $NAMESPACE -o=jsonpath={.spec.replicas})
+        [ -z $REPLICAS ] && export REPLICAS=$(yq e '.replicas' $HELM_PATH/values.yaml)
+
+        echo "Number of replicas: $REPLICAS"
+        echo "Namespace: $NAMESPACE"
+        echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
+
+        helm template $HELM_PATH -f $HELM_PATH/values.yaml -f $HELM_PATH/values-$NAMESPACE.yaml --set imageTag=$IMAGE_TAG-$CI_SHA_SHORT --set replicas=$REPLICAS > manifest.yaml
+        echo "Generated manifest"
+
+    # This deploys to staging/test cluster, for the specified env
+    - name: Deploy to '${{ inputs.app_env }}'
+      uses: Azure/k8s-deploy@v4.4
+      env:
+        # Container resgistries are gotten from a previous step
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      with:
+        namespace: ${{ env.NAMESPACE }}
+        manifests: |
+            ./manifest.yaml
+            ./Dockerfile
+        images: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
