@@ -6,13 +6,13 @@ on:
       app_env:
         required: true
         type: string
-      helm_path:
-        required: true
-        type: string
       image_tag:
         required: true
         type: string
     secrets:
+      helm_path:
+        required: true
+        type: string
       kubeconfig:
         required: true
       ecr_repository:
@@ -27,7 +27,7 @@ jobs:
     env:
       ECR_REPOSITORY: ${{ secrets.ecr_repository }}
       IMAGE_TAG: ${{ inputs.image_tag }}
-      HELM_PATH: ${{ inputs.helm_path }}
+      HELM_PATH: ${{ secrets.helm_path }}
 
     steps:
 
