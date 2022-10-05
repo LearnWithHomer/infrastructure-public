@@ -7,7 +7,7 @@ on:
         required: true
         type: string
     outputs:
-      image:
+      image_tag:
         description: "The built docker image"
         value: ${{ jobs.push_image_to_registry.outputs.image_tag }}
     secrets:
