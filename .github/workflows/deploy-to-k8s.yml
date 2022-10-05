@@ -68,8 +68,8 @@ jobs:
     # This generates the deployment manifests for specified environment
     - name: Generate manifest for '$APP_ENV'
       run: |
-        echo ">>>>>> $HELM_PATH"
-        cd $HELM_PATH
+        echo ">>>>>> ${{ env.HELM_PATH }}"
+        cd ${{ env.HELM_PATH }}
         ls
         export DEPLOY_NAME=$(yq e '.name' ./values.yaml)
 
@@ -97,4 +97,4 @@ jobs:
         manifests: |
             ./manifest.yaml
             ./Dockerfile
-        images: $ECR_REGISTRY/$ECR_REPOSITORY:${{ inputs.image_tag }}
+        images: $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ inputs.image_tag }}
