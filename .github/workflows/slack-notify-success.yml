@@ -20,7 +20,6 @@ jobs:
 
     steps:
     - name: Notify Slack Success
-      if: ${{ success() }}
       uses: wearerequired/slack-messaging-action@v1
       with:
         bot_token: ${{ secrets.slack_bot_token }}
