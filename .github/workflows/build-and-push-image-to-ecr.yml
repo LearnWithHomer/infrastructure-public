@@ -22,7 +22,7 @@ on:
         required: true
       aws_region:
         required: true
-      ecr_repository:
+      ECR_REPOSITORY:
         required: true
 
 jobs:
@@ -31,12 +31,11 @@ jobs:
     runs-on: ubuntu-latest # Using a linux runner
     outputs:
       image_tag: ${{ steps.build_image.outputs.image_tag }}
-      ecr_repository: ${{ inputs.ecr_repository }}
+      ecr_repository: $ECR_REPOSITORY
 
     # Setting environment variables
     env:
-      ECR_REPOSITORY: ${{ inputs.ecr_repository }}
-      # ECR_REPOSITORY: ${{ secrets.ecr_repository }}
+      ECR_REPOSITORY: ${{ inputs.ECR_REPOSITORY }}
       IMAGE_TAG: ${{ inputs.image_ref }}
 
     steps:
