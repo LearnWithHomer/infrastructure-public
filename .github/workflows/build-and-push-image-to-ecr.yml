@@ -35,7 +35,7 @@ jobs:
 
     # Setting environment variables
     env:
-      ECR_REPOSITORY: ${{ inputs.ECR_REPOSITORY }}
+      ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
       IMAGE_TAG: ${{ inputs.image_ref }}
 
     steps:
