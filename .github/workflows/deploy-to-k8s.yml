@@ -9,7 +9,7 @@ on:
       helm_path:
         required: true
         type: string
-      image_tag:
+      image_url:
         required: true
         type: string
       # ecr_repository:
@@ -95,4 +95,4 @@ jobs:
         manifests: |
             ./manifest.yaml
             ./Dockerfile
-        images: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
+        images: ${{ inputs.image_url }} # $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
