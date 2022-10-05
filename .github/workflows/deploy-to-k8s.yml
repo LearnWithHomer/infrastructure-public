@@ -17,7 +17,7 @@ on:
       #   required: true
       kubeconfig:
         required: true
-      ecr_repository:
+      ecr_repo:
         required: true  
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
 
     # Setting environment variables
     env:
-      ECR_REPOSITORY: ${{ secrets.ecr_repository }}
+      ECR_REPOSITORY: ${{ secrets.ecr_repo }}
       IMAGE_TAG: ${{ inputs.image_tag }}
       HELM_PATH: ${{ inputs.helm_path }}
       APP_ENV: ${{ inputs.app_env }}
