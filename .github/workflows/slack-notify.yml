@@ -36,7 +36,7 @@ jobs:
                       "author_icon": "${{ github.event.sender.avatar_url }}",
                       "color": "good",
                       "fallback": "Deployment Finished",
-                      "pretext": "SUCCESS: ${{ github.ref_name }} to ${{ input.app_env }} for ${{ github.event.repository.name }}.",
+                      "pretext": "SUCCESS: ${{ github.ref_name }} to ${{ inputs.app_env }} for ${{ github.event.repository.name }}.",
                       "fields": [
                           {
                             "title": "Revision",
@@ -66,7 +66,7 @@ jobs:
                       "author_icon": "${{ github.event.sender.avatar_url }}",
                       "color": "danger",
                       "fallback": "Failed",
-                      "pretext": "FAILURE: ${{ github.ref_name }} to ${{ input.app_env }} for ${{ github.event.repository.name }}.",
+                      "pretext": "FAILURE: ${{ github.ref_name }} to ${{ inputs.app_env }} for ${{ github.event.repository.name }}.",
                       "fields": [
                           {
                             "title": "Revision",
