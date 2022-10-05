@@ -12,13 +12,11 @@ on:
       image_tag:
         required: true
         type: string
-      # ecr_repository:
-      #   required: true
-      #   type: string
     secrets:
       kubeconfig:
         required: true
-  
+      ecr_repository:
+        required: true  
 
 jobs:
   deploy_to_k8s:
@@ -27,7 +25,7 @@ jobs:
 
     # Setting environment variables
     env:
-      ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+      ECR_REPOSITORY: ${{ secrets.ecr_repository }}
       IMAGE_TAG: ${{ inputs.image_tag }}
       HELM_PATH: ${{ inputs.helm_path }}
 
