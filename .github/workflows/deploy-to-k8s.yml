@@ -29,7 +29,7 @@ jobs:
     env:
       ECR_REPOSITORY: ${{ secrets.ecr_repository }}
       IMAGE_TAG: ${{ inputs.image_tag }}
-      HELM_PATH: ${{ secrets.helm_path }}
+      HELM_PATH: ${{ inputs.helm_path }}
       APP_ENV: ${{ inputs.app_env }}
 
     steps:
