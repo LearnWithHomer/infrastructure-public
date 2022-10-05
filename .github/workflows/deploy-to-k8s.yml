@@ -68,20 +68,20 @@ jobs:
     # This generates the deployment manifests for specified environment
     - name: Generate manifest for '${{ inputs.app_env }}'
       run: |
-        export DEPLOY_NAME=$(yq e '.name' $HELM_PATH/values.yaml)
+        cd $HELM_PATH
+        export DEPLOY_NAME=$(yq e '.name' ./values.yaml)
 
         [ ${{ inputs.app_env }} == devopsTest ] && export echo "app_env=dev" >> $GITHUB_ENV
         echo "app_env: $app_env"
-        export NAMESPACE=$(yq e '.namespace' $HELM_PATH/values-$app_env.yaml)
+        export NAMESPACE=$(yq e '.namespace' ./values-$app_env.yaml)
         export REPLICAS=$(kubectl get deployment $DEPLOY_NAME-$NAMESPACE -n $NAMESPACE -o=jsonpath={.spec.replicas})
-        [ -z $REPLICAS ] && export REPLICAS=$(yq e '.replicas' $HELM_PATH/values.yaml)
+        [ -z $REPLICAS ] && export REPLICAS=$(yq e '.replicas' ./values.yaml)
 
         echo "Number of replicas: $REPLICAS"
         echo "Namespace: $NAMESPACE"
         echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
 
-        cd $HELM_PATH
-        helm template $HELM_PATH -f $HELM_PATH/values.yaml -f $HELM_PATH/values-$NAMESPACE.yaml --set imageTag=$IMAGE_TAG-$CI_SHA_SHORT --set replicas=$REPLICAS > manifest.yaml
+        helm template . -f ./values.yaml -f ./values-$NAMESPACE.yaml --set imageTag=$IMAGE_TAG-$CI_SHA_SHORT --set replicas=$REPLICAS > manifest.yaml
         echo "Generated manifest"
 
     # This deploys to staging/test cluster, for the specified env
