@@ -6,9 +6,9 @@ on:
       image_ref:
         required: true
         type: string
-      ecr_repository:
-        required: true
-        type: string
+      # ecr_repository:
+      #   required: true
+      #   type: string
     outputs:
       image_tag:
         description: "The built docker image"
@@ -22,8 +22,8 @@ on:
         required: true
       aws_region:
         required: true
-      # ecr_repository:
-      #   required: true
+      ecr_repository:
+        required: true
 
 jobs:
   push_image_to_registry:
