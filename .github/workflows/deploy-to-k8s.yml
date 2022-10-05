@@ -18,7 +18,7 @@ on:
       kubeconfig:
         required: true
       ecr_repo:
-        required: true  
+        # required: true
 
 jobs:
   deploy_to_k8s:
