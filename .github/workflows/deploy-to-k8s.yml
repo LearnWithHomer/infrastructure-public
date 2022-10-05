@@ -80,6 +80,7 @@ jobs:
         echo "Namespace: $NAMESPACE"
         echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
 
+        cd $HELM_PATH
         helm template $HELM_PATH -f $HELM_PATH/values.yaml -f $HELM_PATH/values-$NAMESPACE.yaml --set imageTag=$IMAGE_TAG-$CI_SHA_SHORT --set replicas=$REPLICAS > manifest.yaml
         echo "Generated manifest"
 
