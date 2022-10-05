@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest # Using a linux runner
     outputs:
       image_tag: ${{ steps.build_image.outputs.image_tag }}
-      ecr_repository: ${{ steps.build_image.outputs.ecr_repository }}
+      ecr_repository: $ECR_REPOSITORY
 
     # Setting environment variables
     env:
