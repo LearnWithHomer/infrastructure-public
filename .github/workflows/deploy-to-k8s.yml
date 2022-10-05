@@ -12,7 +12,6 @@ on:
     secrets:
       helm_path:
         required: true
-        type: string
       kubeconfig:
         required: true
       ecr_repository:
