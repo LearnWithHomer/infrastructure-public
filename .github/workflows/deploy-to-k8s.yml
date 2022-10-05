@@ -13,8 +13,8 @@ on:
         required: true
         type: string
     secrets:
-      helm_path:
-        required: true
+      # helm_path:
+      #   required: true
       kubeconfig:
         required: true
       ecr_repository:
