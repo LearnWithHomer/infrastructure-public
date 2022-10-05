@@ -9,7 +9,7 @@ on:
       helm_path:
         required: true
         type: string
-      image_url:
+      image_tag:
         required: true
         type: string
       # ecr_repository:
@@ -27,7 +27,6 @@ jobs:
 
     # Setting environment variables
     env:
-      # ECR_REPOSITORY: ${{ secrets.ecr_repository }}
       ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
       IMAGE_TAG: ${{ inputs.image_tag }}
       HELM_PATH: ${{ inputs.helm_path }}
@@ -81,7 +80,7 @@ jobs:
         echo "Namespace: $NAMESPACE"
         echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
 
-        helm template . -f ./values.yaml -f ./values-$NAMESPACE.yaml --set imageTag=$IMAGE_TAG-$CI_SHA_SHORT --set replicas=$REPLICAS > manifest.yaml
+        helm template . -f ./values.yaml -f ./values-$NAMESPACE.yaml --set imageTag=${{ inputs.image_tag }} --set replicas=$REPLICAS > manifest.yaml
         echo "Generated manifest"
 
     # This deploys to staging/test cluster, for the specified env
@@ -95,4 +94,4 @@ jobs:
         manifests: |
             ./manifest.yaml
             ./Dockerfile
-        images: ${{ inputs.image_url }} # $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
+        images: $ECR_REGISTRY/$ECR_REPOSITORY:${{ inputs.image_tag }}
