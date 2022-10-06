@@ -85,6 +85,16 @@ jobs:
         helm template . -f ./values.yaml -f ./values-$NAMESPACE.yaml --set imageTag=${{ inputs.image_tag }} --set replicas=$REPLICAS > $HELM_PATH/manifest.yaml
         ls
         echo "Done: Generated manifest!"
+      uses: FranzDiebold/github-env-vars-action@v2
+
+    # DEBUG
+    - name: Debug step
+      run: |
+        pwd
+        ls
+        cd $HELM_PATH
+        pwd
+        ls
 
     # This deploys to staging/test cluster, for the specified env
     - name: Deploy to '$APP_ENV'
