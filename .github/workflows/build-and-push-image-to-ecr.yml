@@ -13,8 +13,8 @@ on:
       image_tag:
         description: "The built docker image"
         value: ${{ jobs.push_image_to_registry.outputs.image_tag }}
-      ecr_repository:
-        value: ${{ jobs.push_image_to_registry.outputs.ecr_repository }}
+      # ecr_repository:
+      #   value: ${{ jobs.push_image_to_registry.outputs.ecr_repository }}
     secrets:
       access_key_id:
         required: true
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest # Using a linux runner
     outputs:
       image_tag: ${{ steps.build_image.outputs.image_tag }}
-      ecr_repository: ${{ env.ECR_REPOSITORY }}
+      # ecr_repository: ${{ env.ECR_REPOSITORY }}
 
     # Setting environment variables
     env:
@@ -71,4 +71,3 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
         echo "::set-output name=image_tag::$IMAGE_TAG-$CI_SHA_SHORT"
-        echo "::set-output name=ecr_repository::$ECR_REPOSITORY"
