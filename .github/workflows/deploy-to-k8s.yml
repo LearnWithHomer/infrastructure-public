@@ -12,9 +12,9 @@ on:
       helm_path:
         required: true
         type: string
-      ecr_repo_input:
-        required: true
-        type: string
+      # ecr_repo_input:
+      #   required: true
+      #   type: string
     secrets:
       helm_path_secret:
         required: true
@@ -77,8 +77,6 @@ jobs:
         echo "HELM_PATH_SECRET >>>>>> ${{ env.HELM_PATH_SECRET }}"
         echo "ECR_REPO_INPUT >>>>>> ${{ env.ECR_REPO_INPUT }}"
         
-        cd ${{ env.HELM_PATH }}
-        ls
         cd ${{ env.HELM_PATH_SECRET }}
         ls
         export DEPLOY_NAME=$(yq e '.name' ./values.yaml)
