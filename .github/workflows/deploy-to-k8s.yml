@@ -65,6 +65,7 @@ jobs:
       run: |
         cd $HELM_PATH
         export DEPLOY_NAME=$(yq e '.name' ./values.yaml)
+        echo ">> DEPLOY_NAME: $DEPLOY_NAME"
 
         [ $APP_ENV == devopsTest ] && export echo "APP_ENV=dev" >> $GITHUB_ENV
         echo ">> APP_ENV: $APP_ENV"
