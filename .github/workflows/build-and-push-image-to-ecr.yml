@@ -22,7 +22,7 @@ on:
 
 jobs:
   push_image_to_registry:
-    name: Push_Image
+    name: PushImage
     runs-on: ubuntu-latest # Using a linux runner
     outputs:
       image_tag: ${{ steps.build_image.outputs.image_tag }}
