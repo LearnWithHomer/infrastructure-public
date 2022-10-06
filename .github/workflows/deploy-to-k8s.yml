@@ -61,7 +61,7 @@ jobs:
       uses: FranzDiebold/github-env-vars-action@v2
 
     # This generates the deployment manifests for specified environment
-    - name: Generate manifest for '$APP_ENV'
+    - name: Generate manifest for '${{ env.APP_ENV }}'
       run: |
         cd $HELM_PATH
         ls
@@ -82,7 +82,7 @@ jobs:
         echo "Done: Generated manifest!"
 
     # This deploys to staging/test cluster, for the specified env
-    - name: Deploy to '$APP_ENV'
+    - name: Deploy to '${{ env.APP_ENV }}'
       uses: Azure/k8s-deploy@v4.4
       env:
         # Container resgistries are gotten from a previous step
