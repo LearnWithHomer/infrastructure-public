@@ -6,10 +6,7 @@ on:
       app_env:
         required: true
         type: string
-      image_tag:
-        required: true
-        type: string
-      helm_path:
+      rel_helm_path:
         required: true
         type: string
     secrets:
@@ -26,10 +23,9 @@ jobs:
     # Setting environment variables
     env:
       ECR_REPOSITORY: ${{ secrets.ecr_repo }}
-      IMAGE_TAG: ${{ inputs.image_tag }}
-      HELM_PATH: ${{ github.workspace }}/${{ inputs.helm_path }}
+      IMAGE_TAG: ${{ github.ref_name }}
+      HELM_PATH: ${{ github.workspace }}/${{ inputs.rel_helm_path }}
       APP_ENV: ${{ inputs.app_env }}
-      workspace: ${{ github.workspace }}
 
     steps:
 
@@ -81,26 +77,9 @@ jobs:
         echo "Namespace: $NAMESPACE"
         echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
 
-        helm template . -f ./values.yaml -f ./values-$NAMESPACE.yaml --set imageTag=${{ inputs.image_tag }} --set replicas=$REPLICAS > manifest.yaml
-        echo "ls"
-        ls
         helm template . -f ./values.yaml -f ./values-$NAMESPACE.yaml --set imageTag=${{ inputs.image_tag }} --set replicas=$REPLICAS > ${{ runner.temp }}/manifest.yaml
-        echo "ls ${{ runner.temp }}"
         ls ${{ runner.temp }}
         echo "Done: Generated manifest!"
-
-    # DEBUG
-    - name: Debug step
-      run: |
-        echo "pwd" && pwd
-        echo "ls" && ls
-        echo "cd $HELM_PATH" && cd $HELM_PATH
-        echo "pwd" && pwd
-        echo "ls" && ls
-        echo "cd ${{ runner.temp }}" && cd ${{ runner.temp }}
-        echo "pwd" && pwd
-        echo "ls" && ls
-        
 
     # This deploys to staging/test cluster, for the specified env
     - name: Deploy to '$APP_ENV'
@@ -113,3 +92,4 @@ jobs:
         manifests: |
             ${{ runner.temp }}/manifest.yaml
         images: $ECR_REGISTRY/$ECR_REPOSITORY:${{ inputs.image_tag }}
+        images: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT

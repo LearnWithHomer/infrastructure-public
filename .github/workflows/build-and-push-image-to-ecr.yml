@@ -2,10 +2,6 @@ name: Push image to Container Registry
 
 on:
   workflow_call:
-    inputs:
-      image_ref:
-        required: true
-        type: string
     secrets:
       access_key_id:
         required: true
@@ -15,23 +11,16 @@ on:
         required: true
       ecr_repo:
         required: true
-    outputs:
-      image_tag:
-        description: "The built docker image"
-        value: ${{ jobs.push_image_to_registry.outputs.image_tag }}
 
 jobs:
   push_image_to_registry:
     name: PushImage
     runs-on: ubuntu-latest # Using a linux runner
-    outputs:
-      image_tag: ${{ steps.build_image.outputs.image_tag }}
 
     # Setting environment variables
     env:
       ECR_REPOSITORY: ${{ secrets.ecr_repo }}
-      IMAGE_TAG: ${{ inputs.image_ref }}
-      workspace: ${{ github.workspace }}
+      IMAGE_TAG: ${{ github.ref_name }}
 
     steps:
 
@@ -65,4 +54,3 @@ jobs:
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
-        echo "::set-output name=image_tag::$IMAGE_TAG-$CI_SHA_SHORT"
