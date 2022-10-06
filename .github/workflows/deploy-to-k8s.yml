@@ -64,7 +64,6 @@ jobs:
     - name: Generate manifest for '${{ env.APP_ENV }}'
       run: |
         cd $HELM_PATH
-        ls
         export DEPLOY_NAME=$(yq e '.name' ./values.yaml)
 
         [ $APP_ENV == devopsTest ] && export echo "APP_ENV=dev" >> $GITHUB_ENV
