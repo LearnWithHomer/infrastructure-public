@@ -74,7 +74,7 @@ jobs:
         
         export REPLICAS=$(kubectl get deployment $DEPLOY_NAME-$NAMESPACE -n $NAMESPACE -o=jsonpath={.spec.replicas})
         [ -z $REPLICAS ] && export REPLICAS=$(yq e '.replicas' ./values.yaml)
-        echo "Number of replicas: $REPLICAS"
+        echo ">> Number of replicas: $REPLICAS"
 
         echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
 
