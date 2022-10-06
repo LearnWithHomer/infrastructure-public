@@ -82,7 +82,7 @@ jobs:
         echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
 
         helm template . -f ./values.yaml -f ./values-$NAMESPACE.yaml --set imageTag=${{ inputs.image_tag }} --set replicas=$REPLICAS > manifest.yaml
-        echo "Generated manifest"
+        echo "Done: Generated manifest!"
 
     # This deploys to staging/test cluster, for the specified env
     - name: Deploy to '$APP_ENV'
@@ -91,7 +91,7 @@ jobs:
         # Container resgistries are gotten from a previous step
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       with:
-        namespace: $NAMESPACE
+        namespace: ${{ env.NAMESPACE }}
         manifests: |
             ./manifest.yaml
             ./Dockerfile
