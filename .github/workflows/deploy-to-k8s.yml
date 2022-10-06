@@ -70,6 +70,7 @@ jobs:
     - name: Generate manifest for '${{ env.APP_ENV }}'
       run: |
         echo ">>>>>> ${{ env.HELM_PATH }}"
+        echo ">>>>>> ${{ env.HELM_PATH_SECRET }}"
         cd ${{ env.HELM_PATH }}
         ls
         export DEPLOY_NAME=$(yq e '.name' ./values.yaml)

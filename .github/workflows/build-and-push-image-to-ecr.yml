@@ -22,7 +22,7 @@ on:
         required: true
       aws_region:
         required: true
-      ECR_REPOSITORY:
+      ecr_repo:
         required: true
 
 jobs:
@@ -35,7 +35,7 @@ jobs:
 
     # Setting environment variables
     env:
-      ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+      ECR_REPOSITORY: ${{ secrets.ecr_repo }}
       IMAGE_TAG: ${{ inputs.image_ref }}
 
     steps:
