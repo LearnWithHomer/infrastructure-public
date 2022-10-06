@@ -27,7 +27,7 @@ jobs:
     env:
       ECR_REPOSITORY: ${{ secrets.ecr_repo }}
       IMAGE_TAG: ${{ inputs.image_tag }}
-      HELM_PATH: ${{ inputs.helm_path }}
+      HELM_PATH: ${{ github.workspace }}/${{ inputs.helm_path }}
       APP_ENV: ${{ inputs.app_env }}
       workspace: ${{ github.workspace }}
 
@@ -68,6 +68,9 @@ jobs:
     - name: Generate manifest for '${{ env.APP_ENV }}'
       run: |
         echo "HELM_PATH >>>>>> ${{ env.HELM_PATH }}"
+        echo "HELM_PATH >>>>>> $HELM_PATH"
+        echo "env.APP_ENV >>>>>> ${{ env.APP_ENV }}"
+        echo "APP_ENV >>>>>> ${{ env.APP_ENV }}"
 
         cd ${{ env.HELM_PATH }}
         ls

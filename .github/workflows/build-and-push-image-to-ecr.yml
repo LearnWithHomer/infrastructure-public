@@ -6,15 +6,6 @@ on:
       image_ref:
         required: true
         type: string
-      # ecr_repository:
-      #   required: true
-      #   type: string
-    outputs:
-      image_tag:
-        description: "The built docker image"
-        value: ${{ jobs.push_image_to_registry.outputs.image_tag }}
-      # ecr_repository:
-      #   value: ${{ jobs.push_image_to_registry.outputs.ecr_repository }}
     secrets:
       access_key_id:
         required: true
@@ -24,6 +15,10 @@ on:
         required: true
       ecr_repo:
         required: true
+    outputs:
+      image_tag:
+        description: "The built docker image"
+        value: ${{ jobs.push_image_to_registry.outputs.image_tag }}
 
 jobs:
   push_image_to_registry:
@@ -31,7 +26,6 @@ jobs:
     runs-on: ubuntu-latest # Using a linux runner
     outputs:
       image_tag: ${{ steps.build_image.outputs.image_tag }}
-      # ecr_repository: ${{ env.ECR_REPOSITORY }}
 
     # Setting environment variables
     env:
