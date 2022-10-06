@@ -77,7 +77,7 @@ jobs:
         echo "Namespace: $NAMESPACE"
         echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
 
-        helm template . -f ./values.yaml -f ./values-$NAMESPACE.yaml --set imageTag=$IMAGE_TAG --set replicas=$REPLICAS > ${{ runner.temp }}/manifest.yaml
+        helm template . -f ./values.yaml -f ./values-$NAMESPACE.yaml --set imageTag=$IMAGE_TAG-$CI_SHA_SHORT --set replicas=$REPLICAS > ${{ runner.temp }}/manifest.yaml
         ls ${{ runner.temp }}
         echo "Done: Generated manifest!"
 
