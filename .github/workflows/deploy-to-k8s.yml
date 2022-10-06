@@ -13,12 +13,12 @@ on:
         required: true
         type: string
     secrets:
-      # helm_path:
-      #   required: true
+      helm_path_secret:
+        required: true
       kubeconfig:
         required: true
       ecr_repo:
-        # required: true
+        required: true
 
 jobs:
   deploy_to_k8s:
@@ -30,6 +30,7 @@ jobs:
       ECR_REPOSITORY: ${{ secrets.ecr_repo }}
       IMAGE_TAG: ${{ inputs.image_tag }}
       HELM_PATH: ${{ inputs.helm_path }}
+      HELM_PATH_SECRET: ${{ secrets.helm_path_secret }}
       APP_ENV: ${{ inputs.app_env }}
 
     steps:
@@ -66,14 +67,14 @@ jobs:
       uses: FranzDiebold/github-env-vars-action@v2
 
     # This generates the deployment manifests for specified environment
-    - name: Generate manifest for '$APP_ENV'
+    - name: Generate manifest for '${{ env.APP_ENV }}'
       run: |
         echo ">>>>>> ${{ env.HELM_PATH }}"
         cd ${{ env.HELM_PATH }}
         ls
         export DEPLOY_NAME=$(yq e '.name' ./values.yaml)
 
-        [ $APP_ENV == devopsTest ] && export echo "app_env=dev" >> $GITHUB_ENV
+        [ ${{ env.APP_ENV }} == devopsTest ] && export echo "app_env=dev" >> $GITHUB_ENV
         echo "app_env: $app_env"
         export NAMESPACE=$(yq e '.namespace' ./values-$app_env.yaml)
         export REPLICAS=$(kubectl get deployment $DEPLOY_NAME-$NAMESPACE -n $NAMESPACE -o=jsonpath={.spec.replicas})
@@ -87,7 +88,7 @@ jobs:
         echo "Generated manifest"
 
     # This deploys to staging/test cluster, for the specified env
-    - name: Deploy to '$APP_ENV'
+    - name: Deploy to '${{ env.APP_ENV }}'
       uses: Azure/k8s-deploy@v4.4
       env:
         # Container resgistries are gotten from a previous step
