@@ -67,18 +67,13 @@ jobs:
     # This generates the deployment manifests for specified environment
     - name: Generate manifest for '$APP_ENV'
       run: |
-        echo "HELM_PATH >>>>>> ${{ env.HELM_PATH }}"
-        echo "HELM_PATH >>>>>> $HELM_PATH"
-        echo "env.APP_ENV >>>>>> ${{ env.APP_ENV }}"
-        echo "APP_ENV >>>>>> ${{ env.APP_ENV }}"
-
         cd $HELM_PATH
         ls
         export DEPLOY_NAME=$(yq e '.name' ./values.yaml)
 
-        [ $APP_ENV == devopsTest ] && export echo "app_env=dev" >> $GITHUB_ENV
-        echo "app_env: $app_env"
-        export NAMESPACE=$(yq e '.namespace' ./values-$app_env.yaml)
+        [ $APP_ENV == devopsTest ] && export echo "APP_ENV=dev" >> $GITHUB_ENV
+        echo "APP_ENV: $APP_ENV"
+        export NAMESPACE=$(yq e '.namespace' ./values-$APP_ENV.yaml)
         export REPLICAS=$(kubectl get deployment $DEPLOY_NAME-$NAMESPACE -n $NAMESPACE -o=jsonpath={.spec.replicas})
         [ -z $REPLICAS ] && export REPLICAS=$(yq e '.replicas' ./values.yaml)
 
@@ -90,13 +85,13 @@ jobs:
         echo "Generated manifest"
 
     # This deploys to staging/test cluster, for the specified env
-    - name: Deploy to '${{ env.APP_ENV }}'
+    - name: Deploy to '$APP_ENV'
       uses: Azure/k8s-deploy@v4.4
       env:
         # Container resgistries are gotten from a previous step
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       with:
-        namespace: ${{ env.NAMESPACE }}
+        namespace: $NAMESPACE
         manifests: |
             ./manifest.yaml
             ./Dockerfile
