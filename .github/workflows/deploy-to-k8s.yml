@@ -12,6 +12,9 @@ on:
       helm_path:
         required: true
         type: string
+      ecr_repo_input:
+        required: true
+        type: string
     secrets:
       helm_path_secret:
         required: true
@@ -28,6 +31,7 @@ jobs:
     # Setting environment variables
     env:
       ECR_REPOSITORY: ${{ secrets.ecr_repo }}
+      ECR_REPO_INPUT: ${{ inputs.ecr_repo_input }}
       IMAGE_TAG: ${{ inputs.image_tag }}
       HELM_PATH: ${{ inputs.helm_path }}
       HELM_PATH_SECRET: ${{ secrets.helm_path_secret }}
@@ -69,9 +73,13 @@ jobs:
     # This generates the deployment manifests for specified environment
     - name: Generate manifest for '${{ env.APP_ENV }}'
       run: |
-        echo ">>>>>> ${{ env.HELM_PATH }}"
-        echo ">>>>>> ${{ env.HELM_PATH_SECRET }}"
+        echo "HELM_PATH >>>>>> ${{ env.HELM_PATH }}"
+        echo "HELM_PATH_SECRET >>>>>> ${{ env.HELM_PATH_SECRET }}"
+        echo "ECR_REPO_INPUT >>>>>> ${{ env.ECR_REPO_INPUT }}"
+        
         cd ${{ env.HELM_PATH }}
+        ls
+        cd ${{ env.HELM_PATH_SECRET }}
         ls
         export DEPLOY_NAME=$(yq e '.name' ./values.yaml)
 
