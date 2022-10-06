@@ -91,5 +91,4 @@ jobs:
         namespace: ${{ env.NAMESPACE }}
         manifests: |
             ${{ runner.temp }}/manifest.yaml
-        images: $ECR_REGISTRY/$ECR_REPOSITORY:${{ inputs.image_tag }}
         images: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
