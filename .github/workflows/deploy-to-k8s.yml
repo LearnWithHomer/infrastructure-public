@@ -93,5 +93,5 @@ jobs:
       with:
         namespace: ${{ env.NAMESPACE }}
         manifests: |
-            $HELM_PATH/manifest.yaml
+            ${{ env.HELM_PATH }}/manifest.yaml
         images: $ECR_REGISTRY/$ECR_REPOSITORY:${{ inputs.image_tag }}
