@@ -85,18 +85,22 @@ jobs:
         echo "ls"
         ls
         helm template . -f ./values.yaml -f ./values-$NAMESPACE.yaml --set imageTag=${{ inputs.image_tag }} --set replicas=$REPLICAS > ${{ runner.temp }}/manifest.yaml
-        echo "ls ${{ runner.temp }}""
+        echo "ls ${{ runner.temp }}"
         ls ${{ runner.temp }}
         echo "Done: Generated manifest!"
 
     # DEBUG
     - name: Debug step
       run: |
-        pwd
-        ls
-        cd $HELM_PATH
-        pwd
-        ls
+        echo "pwd" && pwd
+        echo "ls" && ls
+        echo "cd $HELM_PATH" && cd $HELM_PATH
+        echo "pwd" && pwd
+        echo "ls" && ls
+        echo "cd ${{ runner.temp }}" && cd ${{ runner.temp }}
+        echo "pwd" && pwd
+        echo "ls" && ls
+        
 
     # This deploys to staging/test cluster, for the specified env
     - name: Deploy to '$APP_ENV'
