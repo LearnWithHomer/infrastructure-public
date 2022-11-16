@@ -26,7 +26,7 @@ jobs:
 
     # Checks out the current repository
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     # Allows use of some extra context env vars e.g., $CI_SHA_SHORT
     - name: set-env-vars
