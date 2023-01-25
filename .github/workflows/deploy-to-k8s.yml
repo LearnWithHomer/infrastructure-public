@@ -39,7 +39,7 @@ jobs:
     # Helm is required to generate the manifests
     - name: Install Helm
       run: |
-        wget https://get.helm.sh/helm-v3.9.1-linux-amd64.tar.gz
+        wget https://get.helm.sh/helm-v3.11.0-linux-amd64.tar.gz
         tar xvf helm-v3.11.0-linux-amd64.tar.gz
         sudo mv linux-amd64/helm /usr/local/bin
         echo "Installed helm"
