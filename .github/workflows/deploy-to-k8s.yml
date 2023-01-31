@@ -73,7 +73,7 @@ jobs:
         export NAMESPACE=$(yq e '.namespace' ./values-$APP_ENV.yaml)
         echo ">> Namespace: $NAMESPACE"
         
-        export REPLICAS=$(kubectl get deployment $DEPLOY_NAME-$APP_ENV -n $NAMESPACE -o=jsonpath={.spec.replicas})
+        export REPLICAS=$(kubectl get deployment $DEPLOY_NAME -n $NAMESPACE -o=jsonpath={.spec.replicas})
         [ -z $REPLICAS ] && export REPLICAS=$(yq e '.replicas' ./values.yaml)
         echo ">> Number of replicas: $REPLICAS"
 
