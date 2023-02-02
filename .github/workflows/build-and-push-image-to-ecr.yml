@@ -21,7 +21,6 @@ jobs:
     env:
       ECR_REPOSITORY: ${{ secrets.ecr_repo }}
       IMAGE_TAG: ${{ github.ref_name }}
-      GH_PKG_TOKEN: ${{ secrets.GH_PKG_TOKEN }}
 
     steps:
 
@@ -53,5 +52,5 @@ jobs:
         # Container resgistries are gotten from the previous step
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT --build-arg GH_PKG_TOKEN=$GH_PKG_TOKEN .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT --build-arg GH_PKG_TOKEN=${{ secrets.GH_PKG_TOKEN_TEST }} .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
