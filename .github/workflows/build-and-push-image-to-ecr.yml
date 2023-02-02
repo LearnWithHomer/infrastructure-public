@@ -11,6 +11,10 @@ on:
         required: true
       ecr_repo:
         required: true
+      gh_pkg_token:
+        required: true
+      gh_pkg_token_test:
+        required: true
 
 jobs:
   push_image_to_registry:
