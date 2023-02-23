@@ -11,6 +11,8 @@ on:
         required: true
       ecr_repo:
         required: true
+      gh_pkg_token:
+        required: true
 
 jobs:
   push_image_to_registry:
@@ -52,5 +54,5 @@ jobs:
         # Container resgistries are gotten from the previous step
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT --build-arg GH_PKG_TOKEN=${{ secrets.gh_pkg_token }} .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
