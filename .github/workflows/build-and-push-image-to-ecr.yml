@@ -22,7 +22,7 @@ jobs:
     # Setting environment variables
     env:
       ECR_REPOSITORY: ${{ secrets.ecr_repo }}
-      IMAGE_TAG: ${{ github.ref_name }}
+      # IMAGE_TAG: ${{ github.ref_name }}
 
     steps:
     - name: Set IMAGE_TAG
