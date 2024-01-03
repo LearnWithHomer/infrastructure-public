@@ -25,11 +25,6 @@ jobs:
       # IMAGE_TAG: ${{ github.ref_name }}
 
     steps:
-    - name: Set IMAGE_TAG
-      run: |
-        IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9]/-/g')
-        echo "IMAGE_TAG=${IMAGE_TAG}" >> $IMAGE_TAG
-
     # Checks out the current repository
     - name: Check out code
       uses: actions/checkout@v3
@@ -37,6 +32,11 @@ jobs:
     # Allows use of some extra context env vars e.g., $CI_SHA_SHORT
     - name: set-env-vars
       uses: FranzDiebold/github-env-vars-action@v2
+
+    - name: Set IMAGE_TAG
+      run: |
+        IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9]/-/g')
+        echo "IMAGE_TAG=${IMAGE_TAG}" >> $IMAGE_TAG
 
     # Confuguring AWS on the runner
     - name: Configure AWS credentials
