@@ -23,7 +23,7 @@ jobs:
     # Setting environment variables
     env:
       ECR_REPOSITORY: ${{ secrets.ecr_repo }}
-      IMAGE_TAG: ${{ github.ref_name }}
+      # IMAGE_TAG: ${{ github.ref_name }}
       HELM_PATH: ${{ github.workspace }}/${{ inputs.rel_helm_path }}
       APP_ENV: ${{ inputs.app_env }}
 
@@ -63,16 +63,19 @@ jobs:
     # This generates the deployment manifests for specified environment
     - name: Generate manifest for '${{ env.APP_ENV }}'
       run: |
+        echo "IMAGE_TAG=${IMAGE_TAG}"
+        echo "IMAGE_TAG=${IMAGE_TAG}" >> $IMAGE_TAG
+
         cd $HELM_PATH
         export DEPLOY_NAME=$(yq e '.name' ./values.yaml)
         echo ">> DEPLOY_NAME: $DEPLOY_NAME"
 
         [ $APP_ENV == devopsTest ] && export echo "APP_ENV=dev" >> $GITHUB_ENV
         echo ">> APP_ENV: $APP_ENV"
-        
+
         export NAMESPACE=$(yq e '.namespace' ./values-$APP_ENV.yaml)
         echo ">> Namespace: $NAMESPACE"
-        
+
         export REPLICAS=$(kubectl get deployment $DEPLOY_NAME -n $NAMESPACE -o=jsonpath={.spec.replicas})
         [ -z $REPLICAS ] && export REPLICAS=$(yq e '.replicas' ./values.yaml)
         echo ">> Number of replicas: $REPLICAS"
