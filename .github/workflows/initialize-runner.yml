@@ -6,7 +6,7 @@ on:
 jobs:
   initialize_runner:
     name: Initialize
-    runs-on: ubuntu-latest # Using a linux runner
+    runs-on: self-hosted
 
     steps:
 
