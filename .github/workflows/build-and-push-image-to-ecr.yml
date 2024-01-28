@@ -17,7 +17,7 @@ on:
 jobs:
   push_image_to_registry:
     name: PushImage
-    runs-on: ubuntu-latest # Using a linux runner
+    runs-on: self-hosted
 
     # Setting environment variables
     env:
