@@ -16,7 +16,7 @@ on:
 jobs:
   notify_on_slack:
     name: Slack
-    runs-on: ubuntu-latest # Using a linux runner
+    runs-on: self-hosted
 
     steps:
     - name: Notify Slack Failure
