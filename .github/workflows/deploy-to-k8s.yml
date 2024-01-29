@@ -28,7 +28,6 @@ jobs:
       APP_ENV: ${{ inputs.app_env }}
 
     steps:
-
     # Set kubeconfig context for Staging cluster
     - name: Set Kubeconfig
       uses: azure/k8s-set-context@v2
@@ -37,16 +36,14 @@ jobs:
         kubeconfig: ${{ secrets.kubeconfig }}
 
     # Helm is required to generate the manifests
-    - name: Install Helm
+    - name: Install Helm and K8s
       run: |
         wget https://get.helm.sh/helm-v3.11.0-linux-amd64.tar.gz
         tar xvf helm-v3.11.0-linux-amd64.tar.gz
         sudo mv linux-amd64/helm /usr/local/bin
         echo "Installed helm"
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl.sha256"
-        echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
-        chmod +x kubectl
+        sudo apt-get update && sudo apt-get install -y kubectl
+        echo "Installed kubectl"
 
     # Install yq - yaml processor
     - name: Install yq
