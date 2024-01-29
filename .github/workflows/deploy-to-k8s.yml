@@ -18,7 +18,7 @@ on:
 jobs:
   deploy_to_k8s:
     name: Deploy
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     # Setting environment variables
     env:
