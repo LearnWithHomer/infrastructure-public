@@ -36,19 +36,15 @@ jobs:
         kubeconfig: ${{ secrets.kubeconfig }}
 
     # Helm is required to generate the manifests
-    - name: Install Helm and K8s
+    - name: Install Helm
       run: |
         wget https://get.helm.sh/helm-v3.11.0-linux-amd64.tar.gz
         tar xvf helm-v3.11.0-linux-amd64.tar.gz
         sudo mv linux-amd64/helm /usr/local/bin
         echo "Installed helm"
-        # Install kubectl
-        sudo apt-get update && sudo apt-get install -y apt-transport-https
-        sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/kubernetes-archive-keyring.gpg add -
-        echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list > /dev/null
-        sudo apt-get update
-        sudo apt-get install -y kubectl
-        echo "Installed kubectl"
+
+    - uses: azure/setup-kubectl@v3
+      id: install
 
     # Install yq - yaml processor
     - name: Install yq
