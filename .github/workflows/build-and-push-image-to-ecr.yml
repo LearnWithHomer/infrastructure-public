@@ -13,6 +13,8 @@ on:
         required: true
       gh_pkg_token:
         required: true
+      checkout_dir:
+        required: false
 
 jobs:
   push_image_to_registry:
@@ -28,6 +30,9 @@ jobs:
     # Checks out the current repository
     - name: Check out code
       uses: actions/checkout@v3
+      with:
+        sparse-checkout: |
+          ${{ secrets.checkout_dir }}
 
     # Allows use of some extra context env vars e.g., $CI_SHA_SHORT
     - name: set-env-vars
