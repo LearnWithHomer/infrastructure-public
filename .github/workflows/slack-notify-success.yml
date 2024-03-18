@@ -16,7 +16,7 @@ on:
 jobs:
   notify_on_slack:
     name: Slack
-    runs-on: self-hosted
+    runs-on: ${{ github.event.inputs.runner || 'self-hosted' }}
 
     steps:
     - name: Notify Slack Success
