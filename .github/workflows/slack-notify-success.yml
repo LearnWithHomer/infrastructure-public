@@ -9,6 +9,9 @@ on:
       app_env:
         required: true
         type: string
+      runner:
+        required: true
+        type: string
     secrets:
       slack_bot_token:
         required: true
