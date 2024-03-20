@@ -69,7 +69,7 @@ jobs:
       uses: FranzDiebold/github-env-vars-action@v2
 
     # This generates the deployment manifests for specified environment
-    - name: Fetch envs for '${{ env.APP_ENV }}'
+    - name: Generate Manifest for '${{ env.APP_ENV }}'
       run: |
         IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9]/-/g')
         echo "IMAGE_TAG=${IMAGE_TAG}" >> $IMAGE_TAG
@@ -81,8 +81,6 @@ jobs:
         [ $APP_ENV == devopsTest ] && export echo "APP_ENV=dev" >> $GITHUB_ENV
         echo ">> APP_ENV: $APP_ENV"
 
-    - name: Get replicas for '${{ env.APP_ENV }}'
-      run: |
         if [ ${{ env.specify_namespace }} ]; then
         export NAMESPACE=$(yq e '.namespace' ./values-$APP_ENV.yaml)
         echo ">> Namespace: $NAMESPACE"
@@ -98,8 +96,6 @@ jobs:
         echo ">> Number of replicas: $REPLICAS"
         fi
 
-    - name: Generate Manifest for '${{ env.APP_ENV }}'
-      run: |
         helm template . -f ./values.yaml -f ./values-$APP_ENV.yaml --set imageTag=$IMAGE_TAG-$CI_SHA_SHORT --set replicas=$REPLICAS > ${{ runner.temp }}/manifest.yaml
         ls ${{ runner.temp }}
         echo "Done: Generated manifest!"
@@ -111,7 +107,7 @@ jobs:
         # Container resgistries are gotten from a previous step
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       with:
-        if: ${{ env.specify_namespace == true }}
+        if: ${{ env.specify_namespace }}
         namespace: ${{ env.NAMESPACE }}
         manifests: |
             ${{ runner.temp }}/manifest.yaml
