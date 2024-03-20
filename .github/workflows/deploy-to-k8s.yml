@@ -107,8 +107,6 @@ jobs:
         # Container resgistries are gotten from a previous step
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       with:
-        if: ${{ env.specify_namespace }}
-        namespace: ${{ env.NAMESPACE }}
         manifests: |
             ${{ runner.temp }}/manifest.yaml
         images: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
