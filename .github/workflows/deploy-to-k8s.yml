@@ -94,7 +94,7 @@ jobs:
         echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
 
     - name: Debug specify_namespace
-      run: ${{ env.specify_namespace }}
+      run: echo ${{ env.specify_namespace }}
 
     - name: Get replicas for '${{ env.APP_ENV }}' without namespace
       if: ${{ env.specify_namespace == false }}
