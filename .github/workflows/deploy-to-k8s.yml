@@ -81,7 +81,7 @@ jobs:
         [ $APP_ENV == devopsTest ] && export echo "APP_ENV=dev" >> $GITHUB_ENV
         echo ">> APP_ENV: $APP_ENV"
 
-        if [ $specify_namespace = true ]; then
+        if [[ "${specify_namespace}" == "true" ]]; then
 
             export NAMESPACE=$(yq e '.namespace' ./values-$APP_ENV.yaml)
             echo ">> Namespace: $NAMESPACE"
