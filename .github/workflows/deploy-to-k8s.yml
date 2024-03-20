@@ -82,8 +82,8 @@ jobs:
         echo ">> APP_ENV: $APP_ENV"
 
     - name: Get replicas for '${{ env.APP_ENV }}' with namespace
-      if: ${{ env.specify_namespace == true }}
       run: |
+        if [ ${{ env.specify_namespace == true }} != "false" ]; then
         export NAMESPACE=$(yq e '.namespace' ./values-$APP_ENV.yaml)
         echo ">> Namespace: $NAMESPACE"
 
@@ -92,10 +92,7 @@ jobs:
         echo ">> Number of replicas: $REPLICAS"
 
         echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
-
-    - name: Debug specify_namespace
-      run: echo ${{ env.specify_namespace }}
-
+        fi
     - name: Get replicas for '${{ env.APP_ENV }}' without namespace
       if: ${{ env.specify_namespace == false }}
       run: |
