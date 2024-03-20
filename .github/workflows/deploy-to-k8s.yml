@@ -69,7 +69,7 @@ jobs:
       uses: FranzDiebold/github-env-vars-action@v2
 
     # This generates the deployment manifests for specified environment
-    - name: Generate manifest for '${{ env.APP_ENV }}'
+    - name: Fetch envs for '${{ env.APP_ENV }}'
       run: |
         IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9]/-/g')
         echo "IMAGE_TAG=${IMAGE_TAG}" >> $IMAGE_TAG
@@ -81,23 +81,27 @@ jobs:
         [ $APP_ENV == devopsTest ] && export echo "APP_ENV=dev" >> $GITHUB_ENV
         echo ">> APP_ENV: $APP_ENV"
 
-        if [[ "${specify_namespace}" == "true" ]]; then
+    - name: Get replicas for '${{ env.APP_ENV }}' with namespace
+      if: ${{ env.specify_namespace == true }}
+      run: |
+        export NAMESPACE=$(yq e '.namespace' ./values-$APP_ENV.yaml)
+        echo ">> Namespace: $NAMESPACE"
 
-            export NAMESPACE=$(yq e '.namespace' ./values-$APP_ENV.yaml)
-            echo ">> Namespace: $NAMESPACE"
+        export REPLICAS=$(kubectl get deployment $DEPLOY_NAME -n $NAMESPACE -o=jsonpath={.spec.replicas})
+        [ -z $REPLICAS ] && export REPLICAS=$(yq e '.replicas' ./values.yaml)
+        echo ">> Number of replicas: $REPLICAS"
 
-            export REPLICAS=$(kubectl get deployment $DEPLOY_NAME -n $NAMESPACE -o=jsonpath={.spec.replicas})
-            [ -z $REPLICAS ] && export REPLICAS=$(yq e '.replicas' ./values.yaml)
-            echo ">> Number of replicas: $REPLICAS"
+        echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
 
-            echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
+    - name: Get replicas for '${{ env.APP_ENV }}' without namespace
+      if: ${{ env.specify_namespace == false }}
+      run: |
+        export REPLICAS=$(kubectl get deployment $DEPLOY_NAME -o=jsonpath={.spec.replicas})
+        [ -z $REPLICAS ] && export REPLICAS=$(yq e '.replicas' ./values.yaml)
+        echo ">> Number of replicas: $REPLICAS"
 
-        else
-            export REPLICAS=$(kubectl get deployment $DEPLOY_NAME -o=jsonpath={.spec.replicas})
-            [ -z $REPLICAS ] && export REPLICAS=$(yq e '.replicas' ./values.yaml)
-            echo ">> Number of replicas: $REPLICAS"
-        fi
-
+    - name: Generate Manifest for '${{ env.APP_ENV }}'
+      run: |
         helm template . -f ./values.yaml -f ./values-$APP_ENV.yaml --set imageTag=$IMAGE_TAG-$CI_SHA_SHORT --set replicas=$REPLICAS > ${{ runner.temp }}/manifest.yaml
         ls ${{ runner.temp }}
         echo "Done: Generated manifest!"
