@@ -9,10 +9,6 @@ on:
       rel_helm_path:
         required: true
         type: string
-      specify_namespace:
-        required: false
-        type: boolean
-        default: true
     secrets:
       kubeconfig:
         required: true
@@ -30,8 +26,6 @@ jobs:
       # IMAGE_TAG: ${{ github.ref_name }}
       HELM_PATH: ${{ github.workspace }}/${{ inputs.rel_helm_path }}
       APP_ENV: ${{ inputs.app_env }}
-      specify_namespace: ${{ inputs.specify_namespace }}
-
 
     steps:
     # Set kubeconfig context for Staging cluster
@@ -69,7 +63,7 @@ jobs:
       uses: FranzDiebold/github-env-vars-action@v2
 
     # This generates the deployment manifests for specified environment
-    - name: Generate Manifest for '${{ env.APP_ENV }}'
+    - name: Generate manifest for '${{ env.APP_ENV }}'
       run: |
         IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9]/-/g')
         echo "IMAGE_TAG=${IMAGE_TAG}" >> $IMAGE_TAG
@@ -77,12 +71,10 @@ jobs:
         cd $HELM_PATH
         export DEPLOY_NAME=$(yq e '.name' ./values.yaml)
         echo ">> DEPLOY_NAME: $DEPLOY_NAME"
-        echo ">> specify_namespace: $specify_namespace"
 
         [ $APP_ENV == devopsTest ] && export echo "APP_ENV=dev" >> $GITHUB_ENV
         echo ">> APP_ENV: $APP_ENV"
-    
-        if [ "$specify_namespace" == 'true' ]; then
+
         export NAMESPACE=$(yq e '.namespace' ./values-$APP_ENV.yaml)
         echo ">> Namespace: $NAMESPACE"
 
@@ -91,11 +83,6 @@ jobs:
         echo ">> Number of replicas: $REPLICAS"
 
         echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
-        else
-        export REPLICAS=$(kubectl get deployment $DEPLOY_NAME -o=jsonpath={.spec.replicas})
-        [ -z $REPLICAS ] && export REPLICAS=$(yq e '.replicas' ./values.yaml)
-        echo ">> Number of replicas: $REPLICAS"
-        fi
 
         helm template . -f ./values.yaml -f ./values-$APP_ENV.yaml --set imageTag=$IMAGE_TAG-$CI_SHA_SHORT --set replicas=$REPLICAS > ${{ runner.temp }}/manifest.yaml
         ls ${{ runner.temp }}
@@ -104,12 +91,11 @@ jobs:
     # This deploys to staging/test cluster, for the specified env
     - name: Deploy to '${{ env.APP_ENV }}'
       uses: Azure/k8s-deploy@v4.10.0
-      if: env.specify_namespace == false
       env:
         # Container resgistries are gotten from a previous step
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       with:
-        namespace: ${{ inputs.app_env }}
+        namespace: ${{ env.NAMESPACE }}
         manifests: |
             ${{ runner.temp }}/manifest.yaml
         images: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
