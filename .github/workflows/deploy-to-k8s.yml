@@ -101,12 +101,14 @@ jobs:
         echo "Done: Generated manifest!"
 
     # This deploys to staging/test cluster, for the specified env
+      if: ${{ env.specify_namespace }}
     - name: Deploy to '${{ env.APP_ENV }}'
       uses: Azure/k8s-deploy@v4.10.0
       env:
         # Container resgistries are gotten from a previous step
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       with:
+        namespace: ${{ inputs.app_env }}
         manifests: |
             ${{ runner.temp }}/manifest.yaml
         images: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
