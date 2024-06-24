@@ -2,6 +2,9 @@ name: Push image to Container Registry
 
 on:
   workflow_call:
+    inputs:
+      dockerfile_path:
+        required: false
     secrets:
       access_key_id:
         required: true
@@ -60,5 +63,5 @@ jobs:
       run: |
         IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9]/-/g')
         echo "IMAGE_TAG=${IMAGE_TAG}" >> $IMAGE_TAG
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT --build-arg GH_PKG_TOKEN=${{ secrets.gh_pkg_token }} .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT --build-arg GH_PKG_TOKEN=${{ secrets.gh_pkg_token }} . -f ${{dockerfile_path}}
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
