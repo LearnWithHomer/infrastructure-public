@@ -12,6 +12,14 @@ on:
       runner:
         required: false
         type: string
+      action_type:
+        required: false
+        type: string
+        default: 'Deployment'
+      status:
+        required: false
+        type: string
+        default: 'SUCCESS'
       custom_message:
         required: false
         type: string
@@ -26,11 +34,11 @@ jobs:
     runs-on: ${{ inputs.runner || 'self-hosted' }}
 
     steps:
-    - name: Notify Slack Success
+    - name: Notify Slack
       uses: wearerequired/slack-messaging-action@v1
       with:
         bot_token: ${{ secrets.slack_bot_token }}
-        channel: ${{ inputs.slack_channel }} # <--- Enter the right channel name here
+        channel: ${{ inputs.slack_channel }}
         payload: >-
           {
               "icon_emoji": ":rocket:",
@@ -40,14 +48,34 @@ jobs:
                       "author_name": "${{ github.event.sender.login }}",
                       "author_link": "${{ github.event.sender.html_url }}",
                       "author_icon": "${{ github.event.sender.avatar_url }}",
-                      "color": "good",
-                      "fallback": "Deployment Finished",
-                      "pretext": "${{ inputs.custom_message != '' && inputs.custom_message || format('SUCCESS: {0} to {1} for {2}.', github.ref_name, inputs.app_env, github.event.repository.name) }}",
+                      "color": "${{ inputs.status == 'SUCCESS' && 'good' || 'danger' }}",
+                      "fallback": "${{ inputs.action_type }} ${{ inputs.status }}",
+                      "pretext": "${{ inputs.custom_message != '' && inputs.custom_message || format('{0} {1}: {2} to {3} environment for {4}', inputs.action_type, inputs.status, github.ref_name, inputs.app_env, github.repository) }}",
                       "fields": [
                           {
-                            "title": "Revision",
-                            "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}@${{ github.ref }}>",
+                            "title": "Action",
+                            "value": "${{ inputs.action_type }}",
                             "short": true
+                          },
+                          {
+                            "title": "Status",
+                            "value": "${{ inputs.status }}",
+                            "short": true
+                          },
+                          {
+                            "title": "Environment",
+                            "value": "${{ inputs.app_env }}",
+                            "short": true
+                          },
+                          {
+                            "title": "Branch",
+                            "value": "${{ github.ref_name }}",
+                            "short": true
+                          },
+                          {
+                            "title": "Commit",
+                            "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>",
+                            "short": false
                           }
                         ],
                       "footer": "<https://github.com/${{ github.repository }}|${{ github.repository }}>"
