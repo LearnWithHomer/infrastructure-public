@@ -12,6 +12,10 @@ on:
       runner:
         required: false
         type: string
+      custom_message:
+        required: false
+        type: string
+        default: ''
     secrets:
       slack_bot_token:
         required: true
@@ -38,7 +42,7 @@ jobs:
                       "author_icon": "${{ github.event.sender.avatar_url }}",
                       "color": "good",
                       "fallback": "Deployment Finished",
-                      "pretext": "SUCCESS: ${{ github.ref_name }} to ${{ inputs.app_env }} for ${{ github.event.repository.name }}.",
+                      "pretext": "${{ inputs.custom_message != '' && inputs.custom_message || format('SUCCESS: {0} to {1} for {2}.', github.ref_name, inputs.app_env, github.event.repository.name) }}",
                       "fields": [
                           {
                             "title": "Revision",
