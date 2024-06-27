@@ -50,7 +50,7 @@ jobs:
                       "author_icon": "${{ github.event.sender.avatar_url }}",
                       "color": "${{ inputs.status == 'SUCCESS' && 'good' || 'danger' }}",
                       "fallback": "${{ inputs.action_type }} ${{ inputs.status }}",
-                      "pretext": "${{ inputs.custom_message != '' && inputs.custom_message || format(':rocket: *{0} {1}*\n:link: <{2}|View details>', inputs.status, inputs.action_type, github.server_url + '/' + github.repository + '/actions/runs/' + github.run_id) }}",
+                      "pretext": "${{ inputs.custom_message != '' && inputs.custom_message || format(':rocket: *{0} {1}*\n:link: <{2}|View details>', inputs.status, inputs.action_type, format('{0}/{1}/actions/runs/{2}', github.server_url, github.repository, github.run_id)) }}",
                       "fields": [
                           {
                             "title": "Action",
