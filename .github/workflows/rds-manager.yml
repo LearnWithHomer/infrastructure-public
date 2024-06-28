@@ -40,6 +40,9 @@ on:
       action:
         description: 'The action performed (start or stop)'
         value: ${{ jobs.prepare-inputs.outputs.action }}
+      cluster_list:
+        description: 'The clusters the action operated on'
+        value: ${{ jobs.prepare-inputs.outputs.cluster_list }}
 
 permissions:
   id-token: write
