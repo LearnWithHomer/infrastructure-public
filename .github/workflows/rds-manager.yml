@@ -33,6 +33,13 @@ on:
         required: false
         type: string
         description: 'JSON array of clusters to manage on schedule'
+    outputs:
+      should_run:
+        description: 'Whether the cluster management should run'
+        value: ${{ jobs.prepare-inputs.outputs.should_run }}
+      action:
+        description: 'The action performed (start or stop)'
+        value: ${{ jobs.prepare-inputs.outputs.action }}
 
 permissions:
   id-token: write
