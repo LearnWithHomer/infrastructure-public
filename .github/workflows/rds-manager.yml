@@ -1,0 +1,124 @@
+name: Reusable RDS Cluster Management
+
+on:
+  workflow_call:
+    inputs:
+      aws-region:
+        required: true
+        type: string
+        description: 'AWS region where the RDS clusters are located'
+      role-arn:
+        required: true
+        type: string
+        description: 'ARN of the IAM role to assume for AWS operations'
+      action:
+        required: false
+        type: string
+        description: 'Action to perform (start or stop). If not provided, will be determined based on schedule.'
+      cluster:
+        required: false
+        type: string
+        description: 'RDS cluster identifier. If not provided, will use a predefined list for scheduled actions.'
+      cron-start:
+        required: false
+        type: string
+        default: '0 14 * * 1-5'
+        description: 'Cron expression for start action'
+      cron-stop:
+        required: false
+        type: string
+        default: '0 2 * * 2-6'
+        description: 'Cron expression for stop action'
+      scheduled-clusters:
+        required: false
+        type: string
+        description: 'JSON array of clusters to manage on schedule'
+
+jobs:
+  prepare-inputs:
+    runs-on: ubuntu-latest
+    outputs:
+      action: ${{ steps.set-action.outputs.action }}
+      cluster_list: ${{ steps.set-cluster-list.outputs.cluster_list }}
+      should_run: ${{ steps.check-cluster-list.outputs.should_run }}
+    steps:
+      - name: Set action
+        id: set-action
+        run: |
+          if [ -n "${{ inputs.action }}" ]; then
+            echo "action=${{ inputs.action }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "schedule" ]; then
+            if [ "${{ github.event.schedule }}" == "${{ inputs.cron-start }}" ]; then
+              echo "action=start" >> $GITHUB_OUTPUT
+            else
+              echo "action=stop" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "Error: Action not specified and not a scheduled event"
+            exit 1
+          fi
+
+      - name: Set cluster list
+        id: set-cluster-list
+        run: |
+          if [ -n "${{ inputs.cluster }}" ]; then
+            echo "cluster_list=${{ inputs.cluster }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "schedule" ]; then
+            echo "cluster_list=$(echo '${{ inputs.scheduled-clusters }}' | jq -r 'join(",")')" >> $GITHUB_OUTPUT
+          else
+            echo "Error: Cluster not specified and not a scheduled event"
+            exit 1
+          fi
+
+      - name: Check if cluster list is empty
+        id: check-cluster-list
+        run: |
+          CLUSTER_LIST="${{ steps.set-cluster-list.outputs.cluster_list }}"
+          if [ -z "$CLUSTER_LIST" ]; then
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            echo "Cluster list is empty. Skipping job execution."
+          else
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "Cluster list is not empty. Proceeding with job execution."
+          fi
+
+  manage-clusters:
+    needs: prepare-inputs
+    if: needs.prepare-inputs.outputs.should_run == 'true'
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/aws-cli.yml@workflow/awscli
+    with:
+      aws-region: ${{ inputs.aws-region }}
+      role-arn: ${{ inputs.role-arn }}
+      cli-commands: |
+        ACTION="${{ needs.prepare-inputs.outputs.action }}"
+        CLUSTER_LIST="${{ needs.prepare-inputs.outputs.cluster_list }}"
+        
+        # Function to manage a single cluster
+        manage_cluster() {
+          local identifier=$1
+          
+          if [ "$ACTION" = "start" ]; then
+            echo "Attempting to start DB cluster $identifier"
+            if aws rds start-db-cluster --db-cluster-identifier $identifier 2>&1 | grep -q "InvalidDBClusterState"; then
+              echo "Warning: Cluster $identifier is already running or in an invalid state for starting."
+            else
+              echo "Successfully started DB cluster $identifier"
+            fi
+          elif [ "$ACTION" = "stop" ]; then
+            echo "Attempting to stop DB cluster $identifier"
+            if aws rds stop-db-cluster --db-cluster-identifier $identifier 2>&1 | grep -q "InvalidDBClusterState"; then
+              echo "Warning: Cluster $identifier is already stopped or in an invalid state for stopping."
+            else
+              echo "Successfully stopped DB cluster $identifier"
+            fi
+          else
+            echo "Error: Invalid action specified. Use 'start' or 'stop'."
+            exit 1
+          fi
+        }
+
+        # Main execution
+        IFS=',' read -ra CLUSTER_ARRAY <<< "$CLUSTER_LIST"
+        for cluster in "${CLUSTER_ARRAY[@]}"; do
+          manage_cluster "$cluster"
+        done
