@@ -54,7 +54,7 @@ jobs:
           echo "No pods found matching the criteria"
         else
           for pod in $pods; do
-            memory_usage=$(kubectl top pod $pod -n ${{ inputs.namespace }} --containers | tail -n 1 | awk '{print $3}')
+            memory_usage=$(kubectl top pod $pod -n ${{ inputs.namespace }} --containers | tail -n 1 | awk '{print $4}')
             memory_value=$(echo $memory_usage | sed 's/[^0-9]*//g')
             memory_unit=$(echo $memory_usage | sed 's/[0-9]*//g')
             
