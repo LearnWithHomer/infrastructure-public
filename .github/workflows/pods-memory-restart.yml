@@ -1,0 +1,56 @@
+name: Reusable Pod Memory Check Workflow
+
+on:
+  workflow_call:
+    inputs:
+      namespace:
+        required: true
+        type: string
+      pod_prefix:
+        required: true
+        type: string
+      memory_threshold_mi:
+        required: true
+        type: number
+      kubectl_version:
+        required: false
+        type: string
+        default: '1.29.3'
+    secrets:
+      KUBE_CONFIG:
+        required: true
+
+jobs:
+  check-pod-memory:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v1
+      with:
+        version: 'v${{inputs.kubectl_version}}$'
+
+    - name: Configure kubectl
+      run: |
+        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig.yaml
+        chmod 600 kubeconfig.yaml
+        export KUBECONFIG=./kubeconfig.yaml
+
+    - name: Check pod memory and restart if necessary
+      run: |
+        pods=$(kubectl get pods -n ${{ inputs.namespace }} --field-selector=status.phase=Running --no-headers -o custom-columns=":metadata.name" | grep "^${{ inputs.pod_prefix }}")
+        for pod in $pods; do
+          memory_usage=$(kubectl top pod $pod -n ${{ inputs.namespace }} --containers | tail -n 1 | awk '{print $3}')
+          memory_value=$(echo $memory_usage | sed 's/[^0-9]*//g')
+          memory_unit=$(echo $memory_usage | sed 's/[0-9]*//g')
+          
+          threshold_mi=${{ inputs.memory_threshold_mi }}
+          if [[ "$memory_unit" == "Mi" && $memory_value -gt $threshold_mi ]] || [[ "$memory_unit" == "Gi" && $(echo "$memory_value * 1024" | bc) -ge $threshold_mi ]]; then
+            echo "Pod $pod is using $memory_usage. Restarting..."
+            kubectl delete pod $pod -n ${{ inputs.namespace }}
+          else
+            echo "Pod $pod is using $memory_usage. No action needed."
+          fi
+        done
