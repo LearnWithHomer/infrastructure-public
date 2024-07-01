@@ -99,7 +99,7 @@ jobs:
   manage-clusters:
     needs: prepare-inputs
     if: needs.prepare-inputs.outputs.should_run == 'true'
-    uses: LearnWithHomer/infrastructure-public/.github/workflows/aws-cli.yml@workflow/awscli
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/aws-cli.yml@main
     with:
       aws-region: ${{ inputs.aws-region }}
       role-arn: ${{ inputs.role-arn }}
