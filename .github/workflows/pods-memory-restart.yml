@@ -42,7 +42,7 @@ jobs:
       run: |
         pods=$(kubectl get pods -n ${{ inputs.namespace }} --field-selector=status.phase=Running --no-headers -o custom-columns=":metadata.name" | grep "^${{ inputs.pod_prefix }}")
         for pod in $pods; do
-          memory_usage=$(kubectl top pod $pod -n ${{ inputs.namespace }} --containers | tail -n 1 | awk '{print $3}')
+          memory_usage=$(kubectl top pod $pod -n ${{ inputs.namespace }} --containers | tail -n 1 | awk '{print $4}')
           memory_value=$(echo $memory_usage | sed 's/[^0-9]*//g')
           memory_unit=$(echo $memory_usage | sed 's/[0-9]*//g')
           
