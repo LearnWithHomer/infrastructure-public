@@ -23,9 +23,6 @@ on:
       pods_restarted:
         description: "Number of pods that were restarted"
         value: ${{ jobs.check-pod-memory.outputs.pods_restarted }}
-  
-
-aws elbv2 modify-target-group --target-group-arn arn:aws:elasticloadbalancing:us-east-1:700421434591:targetgroup/k8s-default-magento2-ec5a6eb652/feaf1ed0d19db44d --health-check-path /static/deployed_version.txt
 
 jobs:
   check-pod-memory:
