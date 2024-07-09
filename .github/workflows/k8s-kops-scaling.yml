@@ -84,6 +84,10 @@ jobs:
       vpc_id: ${{ inputs.vpc_id }}
       vpc_cidr: ${{ inputs.vpc_cidr }}
       kops-commands: |
+        # Install yq
+        wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq &&\
+        chmod +x /usr/bin/yq
+
         # Get current instance group configuration
         kops get instancegroups -o yaml > ig-config-original.yaml
         
