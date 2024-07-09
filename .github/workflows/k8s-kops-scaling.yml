@@ -72,7 +72,7 @@ jobs:
   scale-down:
     needs: determine-action
     if: needs.determine-action.outputs.action == 'scale-down'
-    uses: LearnWithHomer/infrastructure-public/.github/workflows/kops-cli.yml@mworkflows/kops
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/kops-cli.yml@workflows/kops
     with:
       aws_account_id: ${{ inputs.aws_account_id }}
       role_name: ${{ inputs.role_name }}
