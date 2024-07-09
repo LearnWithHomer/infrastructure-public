@@ -62,11 +62,11 @@ jobs:
       - id: set-action
         run: |
           if [ "${{ inputs.action }}" != "" ]; then
-            echo "::set-output name=action::${{ inputs.action }}"
+            echo "action=${{ inputs.action }}" >> $GITHUB_OUTPUT
           elif [ "${{ github.event.schedule }}" == "${{ inputs.cron-down }}" ]; then
-            echo "::set-output name=action::scale-down"
+            echo "action=scale-down" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=action::scale-up"
+            echo "action=scale-up" >> $GITHUB_OUTPUT
           fi
 
   scale-down:
