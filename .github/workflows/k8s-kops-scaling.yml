@@ -52,8 +52,6 @@ on:
         required: true
       KUBECONFIG:
         required: true
-      # ARTIFACTS_GITHUB_TOKEN:
-      #   required: true
 
 jobs:
   determine-action:
@@ -86,61 +84,23 @@ jobs:
       vpc_id: ${{ inputs.vpc_id }}
       vpc_cidr: ${{ inputs.vpc_cidr }}
       kops-commands: |
-        # Get current instance group configuration
-        kops get instancegroups -o yaml > ig-config-original.yaml
-        
+        # Get current instance group configuration and store in Parameter Store
+        kops get instancegroups -o yaml | aws ssm put-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --type "String" --value file:// --overwrite
+
         # Process Node instance groups
-        yq e 'select(.spec.role == "Node").spec.minSize = 0 | select(.spec.role == "Node").spec.maxSize = 1 | select(.spec.role == "Node").spec.machineType = "t2.micro"' ig-config-original.yaml > ig-config-modified.yaml
+        kops get instancegroups -o yaml | \
+        yq e 'select(.spec.role == "Node").spec.minSize = 0 | select(.spec.role == "Node").spec.maxSize = 1 | select(.spec.role == "Node").spec.machineType = "t2.micro"' - | \
+        kops replace -f -
 
         # Apply changes
-        kops replace -f ig-config-modified.yaml
         kops update cluster --yes
     secrets:
       SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
       SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
       KUBECONFIG: ${{ secrets.KUBECONFIG }}
-  
-  upload-artifacts:
-    needs: scale-down
-    if: needs.determine-action.outputs.action == 'scale-down'
-    runs-on: self-hosted
-    steps:
-      - name: Upload configuration files
-        uses: actions/upload-artifact@v4
-        with:
-          name: ig-configs
-          path: ${{ github.workspace }}
-          retention-days: 1
-        # env:
-        #   GITHUB_TOKEN: ${{ secrets.ARTIFACTS_GITHUB_TOKEN }}
 
-  prepare-scale-up:
-    needs: determine-action
-    if: needs.determine-action.outputs.action == 'scale-up'
-    runs-on: self-hosted
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: ig-configs
-          path: ${{ github.workspace }}
-        # env:
-        #   GITHUB_TOKEN: ${{ secrets.ARTIFACTS_GITHUB_TOKEN }}
-      
-      - name: Prepare kops commands
-        id: prepare-commands
-        run: |
-          echo 'kops-commands<<EOF' >> $GITHUB_OUTPUT
-          echo '# Apply original configuration' >> $GITHUB_OUTPUT
-          echo 'kops replace -f ${{ github.workspace }}/ig-config-original.yaml' >> $GITHUB_OUTPUT
-          echo 'kops update cluster --yes' >> $GITHUB_OUTPUT
-          echo '' >> $GITHUB_OUTPUT
-          echo '# Wait for cluster to stabilize' >> $GITHUB_OUTPUT
-          echo 'kops validate cluster --wait 10m' >> $GITHUB_OUTPUT
-          echo 'EOF' >> $GITHUB_OUTPUT
-  
   scale-up:
-    needs: [determine-action, prepare-scale-up]
+    needs: determine-action
     if: needs.determine-action.outputs.action == 'scale-up'
     uses: LearnWithHomer/infrastructure-public/.github/workflows/kops-cli.yml@workflows/kops
     with:
@@ -153,7 +113,16 @@ jobs:
       kops_discovery_store: ${{ inputs.kops_discovery_store }}
       vpc_id: ${{ inputs.vpc_id }}
       vpc_cidr: ${{ inputs.vpc_cidr }}
-      kops-commands: ${{ needs.scale-up.outputs.kops-commands }}
+      kops-commands: |
+        # Retrieve original configuration from Parameter Store and apply
+        aws ssm get-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --query Parameter.Value --output text | \
+        kops replace -f -
+
+        # Apply changes
+        kops update cluster --yes
+
+        # Wait for cluster to stabilize
+        kops validate cluster --wait 10m
     secrets:
       SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
       SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
