@@ -52,8 +52,8 @@ on:
         required: true
       KUBECONFIG:
         required: true
-      ARTIFACTS_GITHUB_TOKEN:
-        required: true
+      # ARTIFACTS_GITHUB_TOKEN:
+      #   required: true
 
 jobs:
   determine-action:
@@ -111,8 +111,8 @@ jobs:
           name: ig-configs
           path: ${{ github.workspace }}
           retention-days: 1
-        env:
-          GITHUB_TOKEN: ${{ secrets.ARTIFACTS_GITHUB_TOKEN }}
+        # env:
+        #   GITHUB_TOKEN: ${{ secrets.ARTIFACTS_GITHUB_TOKEN }}
 
   prepare-scale-up:
     needs: determine-action
@@ -124,8 +124,8 @@ jobs:
         with:
           name: ig-configs
           path: ${{ github.workspace }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.ARTIFACTS_GITHUB_TOKEN }}
+        # env:
+        #   GITHUB_TOKEN: ${{ secrets.ARTIFACTS_GITHUB_TOKEN }}
       
       - name: Prepare kops commands
         id: prepare-commands
