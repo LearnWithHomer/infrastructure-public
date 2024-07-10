@@ -79,6 +79,11 @@ jobs:
         uses: azure/setup-kubectl@v1 
         with: 
           version: ${{ inputs.kubectl_version }}
+      
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > kubeconfig.yaml
+          chmod 600 kubeconfig.yaml
 
       - name: Set up Kops
         run: |
@@ -92,5 +97,7 @@ jobs:
           sudo chmod +x /usr/bin/yq
 
       - name: Run Kops commands
+        env:
+          KUBECONFIG: ./kubeconfig.yaml
         run: |
           ${{ inputs.kops-commands }}
