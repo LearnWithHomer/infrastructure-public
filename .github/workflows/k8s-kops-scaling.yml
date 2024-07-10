@@ -88,7 +88,7 @@ jobs:
         kops get instancegroups -o yaml > ig-config-original.yaml
         
         # Process Node instance groups
-        yq e 'select(.spec.role == "Node").spec.minSize = 0 | select(.spec.role == "Node").spec.maxSize = 1 | select(.spec.role == "Node").spec.machineType = "t2.micro"' ig-config-original.yaml > ig-config-modified.yml
+        yq e 'select(.spec.role == "Node").spec.minSize = 0 | select(.spec.role == "Node").spec.maxSize = 1 | select(.spec.role == "Node").spec.machineType = "t2.micro"' ig-config-original.yaml > ig-config-modified.yaml
 
         # Apply changes
         kops replace -f ig-config-modified.yaml
