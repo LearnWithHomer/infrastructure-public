@@ -52,6 +52,8 @@ on:
         required: true
       KUBECONFIG:
         required: true
+      ARTIFACTS_GITHUB_TOKEN:
+        required: true
 
 jobs:
   determine-action:
@@ -93,20 +95,52 @@ jobs:
         # Apply changes
         kops replace -f ig-config-modified.yaml
         kops update cluster --yes
-        
-        # Store state in GitHub
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add ig-config-original.yaml ig-config-modified.yaml
-        git commit -m "Store cluster state for scaling down"
-        git push
     secrets:
       SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
       SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
       KUBECONFIG: ${{ secrets.KUBECONFIG }}
+  
+  upload-artifacts:
+    needs: scale-down
+    if: needs.determine-action.outputs.action == 'scale-down'
+    runs-on: self-hosted
+    steps:
+      - name: Upload configuration files
+        uses: actions/upload-artifact@v4
+        with:
+          name: ig-configs
+          path: ${{ github.workspace }}
+          retention-days: 1
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARTIFACTS_GITHUB_TOKEN }}
 
-  scale-up:
+  prepare-scale-up:
     needs: determine-action
+    if: needs.determine-action.outputs.action == 'scale-up'
+    runs-on: self-hosted
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact
+        with:
+          name: ig-configs
+          path: ${{ github.workspace }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARTIFACTS_GITHUB_TOKEN }}
+      
+      - name: Prepare kops commands
+        id: prepare-commands
+        run: |
+          echo 'kops-commands<<EOF' >> $GITHUB_OUTPUT
+          echo '# Apply original configuration' >> $GITHUB_OUTPUT
+          echo 'kops replace -f ${{ github.workspace }}/ig-config-original.yaml' >> $GITHUB_OUTPUT
+          echo 'kops update cluster --yes' >> $GITHUB_OUTPUT
+          echo '' >> $GITHUB_OUTPUT
+          echo '# Wait for cluster to stabilize' >> $GITHUB_OUTPUT
+          echo 'kops validate cluster --wait 10m' >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+  
+  scale-up:
+    needs: [determine-action, prepare-scale-up]
     if: needs.determine-action.outputs.action == 'scale-up'
     uses: LearnWithHomer/infrastructure-public/.github/workflows/kops-cli.yml@workflows/kops
     with:
@@ -119,19 +153,7 @@ jobs:
       kops_discovery_store: ${{ inputs.kops_discovery_store }}
       vpc_id: ${{ inputs.vpc_id }}
       vpc_cidr: ${{ inputs.vpc_cidr }}
-      kops-commands: |
-        # Retrieve stored state
-        git pull
-        
-        # Apply original configuration
-        kops replace -f ig-config-original.yaml
-        kops update cluster --yes
-        
-        # Wait for cluster to stabilize
-        kops validate cluster --wait 10m
-        
-        # Cleanup
-        rm -f ig-config-original.yaml ig-config-modified.yaml
+      kops-commands: ${{ needs.scale-up.outputs.kops-commands }}
     secrets:
       SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
       SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
