@@ -49,55 +49,44 @@ on:
       KUBECONFIG:
         required: true
 
+env:
+  CLUSTER_NAME: ${{ inputs.cluster_name }}
+  CLUSTER_DOMAIN: ${{ inputs.cluster_domain }}
+  CLUSTER_FULL_NAME: "${{ inputs.cluster_name }}.${{ inputs.cluster_domain }}"
+  KOPS_CLUSTER_NAME: "${{ inputs.cluster_name }}.${{ inputs.cluster_domain }}"
+  KOPS_STATE_BUCKET: "${{ inputs.kops_state_bucket }}"
+  KOPS_DISCOVERY_STORE: "s3://${{ inputs.kops_discovery_store }}"
+  KOPS_STATE_STORE: "s3://${{ inputs.kops_state_bucket }}/${{ inputs.cluster_name }}.${{ inputs.cluster_domain }}/"
+  VPC_ID: ${{ inputs.vpc_id }}
+  KUBECONFIG: "./kubeconfig.yaml"
+  SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
+  SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
+  VPC_CIDR: ${{ inputs.vpc_cidr }}
+
 jobs:
-  setup-and-run-kops:
-    runs-on: self-hosted
-    env:
-      CLUSTER_NAME: ${{ inputs.cluster_name }}
-      CLUSTER_DOMAIN: ${{ inputs.cluster_domain }}
-      CLUSTER_FULL_NAME: "${{ inputs.cluster_name }}.${{ inputs.cluster_domain }}"
-      KOPS_CLUSTER_NAME: "${{ inputs.cluster_name }}.${{ inputs.cluster_domain }}"
-      KOPS_STATE_BUCKET: "${{ inputs.kops_state_bucket }}"
-      KOPS_DISCOVERY_STORE: "s3://${{ inputs.kops_discovery_store }}"
-      KOPS_STATE_STORE: "s3://${{ inputs.kops_state_bucket }}/${{ inputs.cluster_name }}.${{ inputs.cluster_domain }}/"
-      VPC_ID: ${{ inputs.vpc_id }}
-      KUBECONFIG: "${{ secrets.KUBECONFIG }}"
-      SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
-      SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
-      VPC_CIDR: ${{ inputs.vpc_cidr }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+  run-aws-cli:
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/aws-cli.yml@main
+    with:
+      aws-region: ${{ inputs.aws_region }}
+      role-arn: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.role_name }}
+      cli-commands: |
+       # Install kubectl
+       curl -LO "https://dl.k8s.io/release/$(curl -LO https://dl.k8s.io/release/${{inputs.kubectl_version}}/bin/linux/amd64/kubectl)/bin/linux/amd64/kubectl"
+       sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.role_name }}
-          aws-region: ${{ inputs.aws_region }}
 
-      - name: Set up kubectl 
-        uses: azure/setup-kubectl@v1 
-        with: 
-          version: ${{ inputs.kubectl_version }}
-      
-      - name: Configure kubectl
-        run: |
-          echo "${{ secrets.KUBECONFIG }}" | base64 -d > kubeconfig.yaml
-          chmod 600 kubeconfig.yaml
+       # Setup KUBECONFIG
+       echo "${{ secrets.KUBECONFIG }}" | base64 -d > kubeconfig.yaml
+       chmod 600 kubeconfig.yaml
 
-      - name: Set up Kops
-        run: |
-          curl -Lo kops https://github.com/kubernetes/kops/releases/download/$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | grep tag_name | cut -d '"' -f 4)/kops-linux-amd64
-          chmod +x kops
-          sudo mv kops /usr/local/bin/kops
+       # Setup Kops
+       curl -Lo kops https://github.com/kubernetes/kops/releases/download/$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | grep tag_name | cut -d '"' -f 4)/kops-linux-amd64
+       chmod +x kops
+       sudo mv kops /usr/local/bin/kops
 
-      - name: Install yq
-        run: |
-          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
-          sudo chmod +x /usr/bin/yq
+       # Install yq
+       sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+       sudo chmod +x /usr/bin/yq
 
-      - name: Run Kops commands
-        env:
-          KUBECONFIG: ./kubeconfig.yaml
-        run: |
-          ${{ inputs.kops-commands }}
+       # Run Kops Commands
+       ${{ inputs.kops-commands }}
