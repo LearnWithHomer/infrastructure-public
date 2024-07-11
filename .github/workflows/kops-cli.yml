@@ -58,7 +58,8 @@ env:
   KOPS_DISCOVERY_STORE: "s3://${{ inputs.kops_discovery_store }}"
   KOPS_STATE_STORE: "s3://${{ inputs.kops_state_bucket }}/${{ inputs.cluster_name }}.${{ inputs.cluster_domain }}/"
   VPC_ID: ${{ inputs.vpc_id }}
-  KUBECONFIG: "./kubeconfig.yaml"
+
+secrets:
   SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
   SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
   VPC_CIDR: ${{ inputs.vpc_cidr }}
@@ -78,6 +79,7 @@ jobs:
        # Setup KUBECONFIG
        echo "${{ secrets.KUBECONFIG }}" | base64 -d > kubeconfig.yaml
        chmod 600 kubeconfig.yaml
+       export KUBECONFIG=./kubeconfig.yaml
 
        # Setup Kops
        curl -Lo kops https://github.com/kubernetes/kops/releases/download/$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | grep tag_name | cut -d '"' -f 4)/kops-linux-amd64
