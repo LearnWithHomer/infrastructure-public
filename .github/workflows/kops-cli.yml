@@ -52,6 +52,7 @@ on:
 
 jobs:
   run-aws-cli:
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/aws-cli.yml@main
     env:
       CLUSTER_NAME: ${{ inputs.cluster_name }}
       CLUSTER_DOMAIN: ${{ inputs.cluster_domain }}
@@ -65,7 +66,6 @@ jobs:
       SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
       SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
       VPC_CIDR: ${{ inputs.vpc_cidr }}
-    uses: LearnWithHomer/infrastructure-public/.github/workflows/aws-cli.yml@main
     with:
       aws-region: ${{ inputs.aws_region }}
       role-arn: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.role_name }}
