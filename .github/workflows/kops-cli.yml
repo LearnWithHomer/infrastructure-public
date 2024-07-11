@@ -49,21 +49,22 @@ on:
       KUBECONFIG:
         required: true
 
-env:
-  CLUSTER_NAME: ${{ inputs.cluster_name }}
-  CLUSTER_DOMAIN: ${{ inputs.cluster_domain }}
-  CLUSTER_FULL_NAME: "${{ inputs.cluster_name }}.${{ inputs.cluster_domain }}"
-  KOPS_CLUSTER_NAME: "${{ inputs.cluster_name }}.${{ inputs.cluster_domain }}"
-  KOPS_STATE_BUCKET: "${{ inputs.kops_state_bucket }}"
-  KOPS_DISCOVERY_STORE: "s3://${{ inputs.kops_discovery_store }}"
-  KOPS_STATE_STORE: "s3://${{ inputs.kops_state_bucket }}/${{ inputs.cluster_name }}.${{ inputs.cluster_domain }}/"
-  VPC_ID: ${{ inputs.vpc_id }}
-  SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
-  SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
-  VPC_CIDR: ${{ inputs.vpc_cidr }}
 
 jobs:
   run-aws-cli:
+    env:
+      CLUSTER_NAME: ${{ inputs.cluster_name }}
+      CLUSTER_DOMAIN: ${{ inputs.cluster_domain }}
+      CLUSTER_FULL_NAME: "${{ inputs.cluster_name }}.${{ inputs.cluster_domain }}"
+      KOPS_CLUSTER_NAME: "${{ inputs.cluster_name }}.${{ inputs.cluster_domain }}"
+      KOPS_STATE_BUCKET: "${{ inputs.kops_state_bucket }}"
+      KOPS_DISCOVERY_STORE: "s3://${{ inputs.kops_discovery_store }}"
+      KOPS_STATE_STORE: "s3://${{ inputs.kops_state_bucket }}/${{ inputs.cluster_name }}.${{ inputs.cluster_domain }}/"
+      VPC_ID: ${{ inputs.vpc_id }}
+    secrets:
+      SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
+      SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
+      VPC_CIDR: ${{ inputs.vpc_cidr }}
     uses: LearnWithHomer/infrastructure-public/.github/workflows/aws-cli.yml@main
     with:
       aws-region: ${{ inputs.aws_region }}
