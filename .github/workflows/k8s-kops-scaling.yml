@@ -40,6 +40,9 @@ on:
         required: false
         type: string
         default: "172.200.0.0/16"
+      kubeconfig:
+        required: true
+        type: string
       action:
         required: false
         type: string
@@ -83,6 +86,7 @@ jobs:
       kops_discovery_store: ${{ inputs.kops_discovery_store }}
       vpc_id: ${{ inputs.vpc_id }}
       vpc_cidr: ${{ inputs.vpc_cidr }}
+      kubeconfig: ${{ secrets.KUBECONFIG }}
       kops-commands: |
         # Get current instance group configuration and store in Parameter Store
         kops get instancegroups -o yaml | aws ssm put-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --type "String" --value file:// --overwrite
@@ -97,7 +101,6 @@ jobs:
     secrets:
       SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
       SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
-      KUBECONFIG: ${{ secrets.KUBECONFIG }}
 
   scale-up:
     needs: determine-action
@@ -113,6 +116,7 @@ jobs:
       kops_discovery_store: ${{ inputs.kops_discovery_store }}
       vpc_id: ${{ inputs.vpc_id }}
       vpc_cidr: ${{ inputs.vpc_cidr }}
+      kubeconfig: ${{ secrets.KUBECONFIG }}
       kops-commands: |
         # Retrieve original configuration from Parameter Store and apply
         aws ssm get-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --query Parameter.Value --output text | \
@@ -126,4 +130,3 @@ jobs:
     secrets:
       SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
       SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
-      KUBECONFIG: ${{ secrets.KUBECONFIG }}
