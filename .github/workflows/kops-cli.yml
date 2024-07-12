@@ -66,9 +66,6 @@ jobs:
         export KOPS_STATE_STORE="s3://${{ inputs.kops_state_bucket }}/${{ inputs.cluster_name }}.${{ inputs.cluster_domain }}/"
         export VPC_ID=${{ inputs.vpc_id }}
         export VPC_CIDR=${{ inputs.vpc_cidr }}
-        # export SSL_CERT_ARN=${{ secrets.SSL_CERT_ARN }}
-        # export SSL_CERT_ARN_INTERNAL=${{ secrets.SSL_CERT_ARN_INTERNAL }}
-        # export ENCODED_KUBECONFIG=${{ secrets.ENCODED_KUBECONFIG }}
 
         # Install kubectl
         curl -LO "https://dl.k8s.io/release/${{ inputs.kubectl_version }}/bin/linux/amd64/kubectl"
