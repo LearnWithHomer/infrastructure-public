@@ -41,13 +41,12 @@ on:
         required: false
         type: string
         default: "172.200.0.0/16"
-      kubeconfig:
-        required: true
-        type: string
     secrets:
       SSL_CERT_ARN:
         required: true
       SSL_CERT_ARN_INTERNAL:
+        required: true
+      ENCODED_KUBECONFIG:
         required: true
 
 jobs:
@@ -73,13 +72,14 @@ jobs:
           VPC_CIDR: ${{ inputs.vpc_cidr }}
           SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
           SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
+          ENCODED_KUBECONFIG: ${{ secrets.ENCODED_KUBECONFIG }}
         run: |
           # Install kubectl
           curl -LO "https://dl.k8s.io/release/${{ inputs.kubectl_version }}/bin/linux/amd64/kubectl"
           sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
           # Setup KUBECONFIG
-          echo "${{ inputs.kubeconfig }}" | base64 -d > kubeconfig.yaml
+          echo "$ENCODED_KUBECONFIG" | base64 -d > kubeconfig.yaml
           chmod 600 kubeconfig.yaml
           export KUBECONFIG=./kubeconfig.yaml
 
