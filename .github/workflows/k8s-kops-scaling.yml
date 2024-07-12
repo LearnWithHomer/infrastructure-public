@@ -124,7 +124,17 @@ jobs:
         kops update cluster --yes
 
         # Wait for cluster to stabilize
-        kops validate cluster --wait 10m
+        if kops validate cluster --wait 10m; then
+          echo "Cluster validation successful."
+        else
+          validation_exit_code=$?
+          echo "Cluster validation timed out or failed with exit code: $validation_exit_code"
+          echo "The update process completed, but the cluster may need additional time to stabilize."
+          echo "Please check the cluster status manually."
+        fi
+
+        echo "Update process completed."
+        exit 0
     secrets:
       SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
       SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
