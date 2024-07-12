@@ -40,9 +40,6 @@ on:
         required: false
         type: string
         default: "172.200.0.0/16"
-      kubeconfig:
-        required: true
-        type: string
       action:
         required: false
         type: string
