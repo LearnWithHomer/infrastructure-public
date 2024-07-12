@@ -86,7 +86,7 @@ jobs:
       # kubeconfig: ${{ secrets.KUBECONFIG }}
       kops-commands: |
         # Get current instance group configuration and store in Parameter Store
-        kops get instancegroups -o yaml | aws ssm put-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --type "String" --value file:// --overwrite
+        aws ssm put-parameter --name "/kops/hmr-kops-test/ig-config" --type "String" --value "$(kops get instancegroups -o yaml)" --overwrite
 
         # Process Node instance groups
         kops get instancegroups -o yaml | \
