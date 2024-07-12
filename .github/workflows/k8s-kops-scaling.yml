@@ -83,7 +83,6 @@ jobs:
       kops_discovery_store: ${{ inputs.kops_discovery_store }}
       vpc_id: ${{ inputs.vpc_id }}
       vpc_cidr: ${{ inputs.vpc_cidr }}
-      # kubeconfig: ${{ secrets.KUBECONFIG }}
       kops-commands: |
         # Get current instance group configuration and store in Parameter Store
         aws ssm put-parameter --name "/kops/hmr-kops-test/ig-config" --type "String" --value "$(kops get instancegroups -o yaml)" --overwrite
@@ -94,7 +93,7 @@ jobs:
         kops replace -f -
 
         # Apply changes
-        kops update cluster --yes
+        kops rolling-update cluster --yes
     secrets:
       SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
       SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
@@ -114,14 +113,13 @@ jobs:
       kops_discovery_store: ${{ inputs.kops_discovery_store }}
       vpc_id: ${{ inputs.vpc_id }}
       vpc_cidr: ${{ inputs.vpc_cidr }}
-      # kubeconfig: ${{ secrets.KUBECONFIG }}
       kops-commands: |
         # Retrieve original configuration from Parameter Store and apply
         aws ssm get-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --query Parameter.Value --output text | \
         kops replace -f -
 
         # Apply changes
-        kops update cluster --yes
+        kops rolling-update cluster --yes
 
         # Wait for cluster to stabilize
         if kops validate cluster --wait 10m; then
