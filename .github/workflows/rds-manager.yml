@@ -50,7 +50,7 @@ permissions:
 
 jobs:
   prepare-inputs:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       action: ${{ steps.set-action.outputs.action }}
       cluster_list: ${{ steps.set-cluster-list.outputs.cluster_list }}
