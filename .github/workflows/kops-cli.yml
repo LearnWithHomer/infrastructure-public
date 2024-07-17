@@ -45,7 +45,7 @@ on:
       SSL_CERT_ARN:
         required: true
       SSL_CERT_ARN_INTERNAL:
-        required: true
+        required: false
       ENCODED_KUBECONFIG:
         required: true
 
