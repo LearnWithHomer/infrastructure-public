@@ -65,9 +65,9 @@ jobs:
         if kops upgrade cluster --name "${{ inputs.cluster_name }}" | grep -q "No upgrade required"; then
           echo "new_version_check=${{ inputs.cluster_name }} is on the latest Kubernetes version" >> $GITHUB_OUTPUT
         else
-          kops upgrade cluster --name "${{ inputs.cluster_name }}" --yes
+          # kops upgrade cluster --name "${{ inputs.cluster_name }}" --yes
 
-          kops rolling-update cluster --name "${{ inputs.cluster_name }}" --yes
+          # kops rolling-update cluster --name "${{ inputs.cluster_name }}" --yes
 
           updated_version=$(kops get cluster --name "${{ inputs.cluster_name }}" -o yaml | yq -r '.spec.kubernetesVersion')
 
