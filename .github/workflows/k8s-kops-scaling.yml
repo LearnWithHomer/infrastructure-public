@@ -45,6 +45,10 @@ on:
         type: string
         default: ''
         description: 'Action to perform (scale-up or scale-down). If not provided, it will be determined based on the cron schedule.'
+    outputs:
+      action:
+        description: 'The action performed (start or stop)'
+        value: ${{ jobs.determine-action.outputs.action }}
     secrets:
       SSL_CERT_ARN:
         required: true
