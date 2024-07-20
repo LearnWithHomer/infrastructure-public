@@ -99,6 +99,9 @@ jobs:
         ${{ inputs.kops-commands }}
 
         # Output the results
+        cat upgrade_status.txt
         echo "upgrade_status=$(cat upgrade_status.txt)" >> $GITHUB_OUTPUT
+        cat old_version.txt
         echo "old_version=$(cat old_version.txt)" >> $GITHUB_OUTPUT
+        cat new_version.txt
         echo "new_version=$(cat new_version.txt)" >> $GITHUB_OUTPUT
