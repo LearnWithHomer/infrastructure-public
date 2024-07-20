@@ -63,7 +63,7 @@ jobs:
       kops-commands: |
         # Check for Kubernetes
         if kops upgrade cluster | grep -q "No upgrade required"; then
-          echo "new_version_check=$CLUSTER_NAME is on the latest Kubernetes version" >> $GITHUB_OUTPUT
+          echo "new_version_check=$CLUSTER_NAME is on the latest Kubernetes version"
         else
           # kops upgrade cluster --yes
 
@@ -71,8 +71,8 @@ jobs:
 
           updated_version=$(kops get cluster -o yaml | yq -r '.spec.kubernetesVersion')
 
-          echo "updated_version=${updated_version}" >> $GITHUB_OUTPUT
-          echo "new_version_check=Upgraded $CLUSTER_NAME to ${updated_version}" >> $GITHUB_OUTPUT
+          echo "updated_version=${updated_version}"
+          echo "new_version_check=Upgraded $CLUSTER_NAME to ${updated_version}"
         fi
     secrets:
       SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
