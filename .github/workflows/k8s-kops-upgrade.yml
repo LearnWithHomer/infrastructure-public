@@ -70,11 +70,11 @@ jobs:
         old_version=$(echo "$upgrade_output" | awk '/KubernetesVersion/ {print $3}')
         new_version=$(echo "$upgrade_output" | awk '/KubernetesVersion/ {print $4}')
         
-        echo "old_version=${old_version}" >> $GITHUB_OUTPUT
-        echo "new_version=${new_version}" >> $GITHUB_OUTPUT
+        echo "${old_version}" > old_version.txt
+        echo "${new_version}" > new_version.txt
         
         if [[ "${new_version}" > "${old_version}" ]]; then
-          echo "upgrade_status=Upgrade available" >> $GITHUB_OUTPUT
+          echo "Upgrade available" > upgrade_status.txt
           
           echo "Upgrading cluster from ${old_version} to ${new_version}"
           # kops upgrade cluster --yes
@@ -82,7 +82,7 @@ jobs:
           echo "Performing rolling update"
           # kops rolling-update cluster --yes
         else
-          echo "upgrade_status=Up to date" >> $GITHUB_OUTPUT
+          echo "Up to date" > upgrade_status.txt
           echo "Cluster ${{ inputs.cluster_name }} is already on the latest version ${old_version}"
         fi
     secrets:

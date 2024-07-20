@@ -41,6 +41,16 @@ on:
         required: false
         type: string
         default: "172.200.0.0/16"
+    outputs:
+      upgrade_status:
+        description: 'The status of the Kubernetes upgrade check'
+        value: ${{ jobs.run-aws-cli.outputs.upgrade_status }}
+      old_version:
+        description: 'The current Kubernetes version before upgrade'
+        value: ${{ jobs.run-aws-cli.outputs.old_version }}
+      new_version:
+        description: 'The new Kubernetes version after upgrade, if performed'
+        value: ${{ jobs.run-aws-cli.outputs.new_version }}
     secrets:
       SSL_CERT_ARN:
         required: true
@@ -87,3 +97,8 @@ jobs:
 
         # Run Kops Commands
         ${{ inputs.kops-commands }}
+
+        # Output the results
+        echo "upgrade_status=$(cat upgrade_status.txt)" >> $GITHUB_OUTPUT
+        echo "old_version=$(cat old_version.txt)" >> $GITHUB_OUTPUT
+        echo "new_version=$(cat new_version.txt)" >> $GITHUB_OUTPUT
