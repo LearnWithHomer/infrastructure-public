@@ -62,17 +62,17 @@ jobs:
       vpc_cidr: ${{ inputs.vpc_cidr }}
       kops-commands: |
         # Check for Kubernetes
-        if kops upgrade cluster --name "${{ inputs.cluster_name }}" | grep -q "No upgrade required"; then
-          echo "new_version_check=${{ inputs.cluster_name }} is on the latest Kubernetes version" >> $GITHUB_OUTPUT
+        if kops upgrade cluster --name "$CLUSTER_NAME" | grep -q "No upgrade required"; then
+          echo "new_version_check=$CLUSTER_NAME is on the latest Kubernetes version" >> $GITHUB_OUTPUT
         else
-          # kops upgrade cluster --name "${{ inputs.cluster_name }}" --yes
+          # kops upgrade cluster --name "$CLUSTER_NAME" --yes
 
-          # kops rolling-update cluster --name "${{ inputs.cluster_name }}" --yes
+          # kops rolling-update cluster --name "$CLUSTER_NAME" --yes
 
-          updated_version=$(kops get cluster --name "${{ inputs.cluster_name }}" -o yaml | yq -r '.spec.kubernetesVersion')
+          updated_version=$(kops get cluster --name "$CLUSTER_NAME" -o yaml | yq -r '.spec.kubernetesVersion')
 
           echo "updated_version=${updated_version}" >> $GITHUB_OUTPUT
-          echo "new_version_check=Upgraded ${{ inputs.cluster_name }} to ${updated_version}" >> $GITHUB_OUTPUT
+          echo "new_version_check=Upgraded $CLUSTER_NAME to ${updated_version}" >> $GITHUB_OUTPUT
         fi
     secrets:
       SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
