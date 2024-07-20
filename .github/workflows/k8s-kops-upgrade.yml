@@ -62,14 +62,14 @@ jobs:
       vpc_cidr: ${{ inputs.vpc_cidr }}
       kops-commands: |
         # Check for Kubernetes
-        if kops upgrade cluster --name "$CLUSTER_NAME" | grep -q "No upgrade required"; then
+        if kops upgrade cluster | grep -q "No upgrade required"; then
           echo "new_version_check=$CLUSTER_NAME is on the latest Kubernetes version" >> $GITHUB_OUTPUT
         else
-          # kops upgrade cluster --name "$CLUSTER_NAME" --yes
+          # kops upgrade cluster --yes
 
-          # kops rolling-update cluster --name "$CLUSTER_NAME" --yes
+          # kops rolling-update cluster --yes
 
-          updated_version=$(kops get cluster --name "$CLUSTER_NAME" -o yaml | yq -r '.spec.kubernetesVersion')
+          updated_version=$(kops get cluster -o yaml | yq -r '.spec.kubernetesVersion')
 
           echo "updated_version=${updated_version}" >> $GITHUB_OUTPUT
           echo "new_version_check=Upgraded $CLUSTER_NAME to ${updated_version}" >> $GITHUB_OUTPUT
