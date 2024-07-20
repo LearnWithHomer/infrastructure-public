@@ -33,12 +33,15 @@ on:
         type: string
         default: "172.200.0.0/16"
     outputs:
-      new_version_check:
-        description: 'The result of the Kubernetes version check'
-        value: ${{ jobs.check-upgrade-k8s.outputs.new_version_check }}
-      updated_version:
-        description: 'The updated Kubernetes version, if an upgrade was performed'
-        value: ${{ jobs.check-upgrade-k8s.outputs.updated_version }}
+      upgrade_status:
+        description: 'The status of the Kubernetes upgrade check'
+        value: ${{ jobs.check-upgrade-k8s.outputs.upgrade_status }}
+      old_version:
+        description: 'The current Kubernetes version before upgrade'
+        value: ${{ jobs.check-upgrade-k8s.outputs.old_version }}
+      new_version:
+        description: 'The new Kubernetes version after upgrade, if performed'
+        value: ${{ jobs.check-upgrade-k8s.outputs.new_version }}
     secrets:
       SSL_CERT_ARN:
         required: true
@@ -61,18 +64,26 @@ jobs:
       vpc_id: ${{ inputs.vpc_id }}
       vpc_cidr: ${{ inputs.vpc_cidr }}
       kops-commands: |
-        # Check for Kubernetes
-        if kops upgrade cluster | grep -q "No upgrade required"; then
-          echo "new_version_check=$CLUSTER_NAME is on the latest Kubernetes version"
-        else
+        # Check for Kubernetes upgrade
+        upgrade_output=$(kops upgrade cluster)
+        
+        old_version=$(echo "$upgrade_output" | awk '/KubernetesVersion/ {print $3}')
+        new_version=$(echo "$upgrade_output" | awk '/KubernetesVersion/ {print $4}')
+        
+        echo "old_version=${old_version}" >> $GITHUB_OUTPUT
+        echo "new_version=${new_version}" >> $GITHUB_OUTPUT
+        
+        if [[ "${new_version}" > "${old_version}" ]]; then
+          echo "upgrade_status=Upgrade available" >> $GITHUB_OUTPUT
+          
+          echo "Upgrading cluster from ${old_version} to ${new_version}"
           # kops upgrade cluster --yes
-
+          
+          echo "Performing rolling update"
           # kops rolling-update cluster --yes
-
-          updated_version=$(kops get cluster -o yaml | yq -r '.spec.kubernetesVersion')
-
-          echo "updated_version=${updated_version}"
-          echo "new_version_check=Upgraded $CLUSTER_NAME to ${updated_version}"
+        else
+          echo "upgrade_status=Up to date" >> $GITHUB_OUTPUT
+          echo "Cluster ${{ inputs.cluster_name }} is already on the latest version ${old_version}"
         fi
     secrets:
       SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
