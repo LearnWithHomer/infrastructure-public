@@ -52,7 +52,7 @@ on:
 
 jobs:
   check-upgrade-k8s:
-    uses: LearnWithHomer/infrastructure-public/.github/workflows/kops-cli.yml@workflows/kops
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/kops-cli.yml@main
     with:
       aws_account_id: ${{ inputs.aws_account_id }}
       role_name: ${{ inputs.role_name }}

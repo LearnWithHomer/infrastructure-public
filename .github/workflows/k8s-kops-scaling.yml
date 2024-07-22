@@ -6,11 +6,11 @@ on:
       cron-up:
         required: false
         type: string
-        default: '0 20 * * 1-5'
+        default: '0 15 * * 1-5'
       cron-down:
         required: false
         type: string
-        default: '0 6 * * 1-5'
+        default: '0 3 * * 2-6'
       aws_account_id:
         required: true
         type: string
@@ -76,7 +76,7 @@ jobs:
   scale-down:
     needs: determine-action
     if: needs.determine-action.outputs.action == 'scale-down'
-    uses: LearnWithHomer/infrastructure-public/.github/workflows/kops-cli.yml@workflows/kops
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/kops-cli.yml@main
     with:
       aws_account_id: ${{ inputs.aws_account_id }}
       role_name: ${{ inputs.role_name }}
@@ -106,7 +106,7 @@ jobs:
   scale-up:
     needs: determine-action
     if: needs.determine-action.outputs.action == 'scale-up'
-    uses: LearnWithHomer/infrastructure-public/.github/workflows/kops-cli.yml@workflows/kops
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/kops-cli.yml@main
     with:
       aws_account_id: ${{ inputs.aws_account_id }}
       role_name: ${{ inputs.role_name }}
