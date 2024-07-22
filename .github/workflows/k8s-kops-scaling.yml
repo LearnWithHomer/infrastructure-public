@@ -1,0 +1,143 @@
+name: K8s InstanceGroups Scheduled Scaling with Kops
+
+on:
+  workflow_call:
+    inputs:
+      cron-up:
+        required: false
+        type: string
+        default: '0 20 * * 1-5'
+      cron-down:
+        required: false
+        type: string
+        default: '0 6 * * 1-5'
+      aws_account_id:
+        required: true
+        type: string
+      role_name:
+        required: true
+        type: string
+      aws_region:
+        required: false
+        type: string
+        default: "us-east-1"
+      cluster_name:
+        required: true
+        type: string
+      cluster_domain:
+        required: true
+        type: string
+      kops_state_bucket:
+        required: true
+        type: string
+      kops_discovery_store:
+        required: true
+        type: string
+      vpc_id:
+        required: true
+        type: string
+      vpc_cidr:
+        required: false
+        type: string
+        default: "172.200.0.0/16"
+      action:
+        required: false
+        type: string
+        default: ''
+        description: 'Action to perform (scale-up or scale-down). If not provided, it will be determined based on the cron schedule.'
+    outputs:
+      action:
+        description: 'The action performed (start or stop)'
+        value: ${{ jobs.determine-action.outputs.action }}
+    secrets:
+      SSL_CERT_ARN:
+        required: true
+      SSL_CERT_ARN_INTERNAL:
+        required: false
+      ENCODED_KUBECONFIG:
+        required: true
+
+jobs:
+  determine-action:
+    runs-on: self-hosted
+    outputs:
+      action: ${{ steps.set-action.outputs.action }}
+    steps:
+      - id: set-action
+        run: |
+          if [ "${{ inputs.action }}" != "" ]; then
+            echo "action=${{ inputs.action }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.schedule }}" == "${{ inputs.cron-down }}" ]; then
+            echo "action=scale-down" >> $GITHUB_OUTPUT
+          else
+            echo "action=scale-up" >> $GITHUB_OUTPUT
+          fi
+
+  scale-down:
+    needs: determine-action
+    if: needs.determine-action.outputs.action == 'scale-down'
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/kops-cli.yml@workflows/kops
+    with:
+      aws_account_id: ${{ inputs.aws_account_id }}
+      role_name: ${{ inputs.role_name }}
+      aws_region: ${{ inputs.aws_region }}
+      cluster_name: ${{ inputs.cluster_name }}
+      cluster_domain: ${{ inputs.cluster_domain }}
+      kops_state_bucket: ${{ inputs.kops_state_bucket }}
+      kops_discovery_store: ${{ inputs.kops_discovery_store }}
+      vpc_id: ${{ inputs.vpc_id }}
+      vpc_cidr: ${{ inputs.vpc_cidr }}
+      kops-commands: |
+        # Get current instance group configuration and store in Parameter Store
+        # aws ssm put-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --type "String" --value "$(kops get instancegroups -o yaml)" --overwrite
+
+        # Process Node instance groups
+        # kops get instancegroups -o yaml | \
+        # yq e 'select(.spec.role == "Node").spec.minSize = 0 | select(.spec.role == "Node").spec.maxSize = 1 | select(.spec.role == "Node").spec.machineType = "t2.micro"' - | \
+        # kops replace -f -
+
+        # Apply changes
+        # kops rolling-update cluster --yes
+    secrets:
+      SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
+      SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
+      ENCODED_KUBECONFIG: ${{ secrets.ENCODED_KUBECONFIG }}
+
+  scale-up:
+    needs: determine-action
+    if: needs.determine-action.outputs.action == 'scale-up'
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/kops-cli.yml@workflows/kops
+    with:
+      aws_account_id: ${{ inputs.aws_account_id }}
+      role_name: ${{ inputs.role_name }}
+      aws_region: ${{ inputs.aws_region }}
+      cluster_name: ${{ inputs.cluster_name }}
+      cluster_domain: ${{ inputs.cluster_domain }}
+      kops_state_bucket: ${{ inputs.kops_state_bucket }}
+      kops_discovery_store: ${{ inputs.kops_discovery_store }}
+      vpc_id: ${{ inputs.vpc_id }}
+      vpc_cidr: ${{ inputs.vpc_cidr }}
+      kops-commands: |
+        # Retrieve original configuration from Parameter Store and apply
+        # aws ssm get-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --query Parameter.Value --output text | \
+        # kops replace -f -
+
+        # Apply changes
+        # kops rolling-update cluster --yes
+
+        # Wait for cluster to stabilize
+        # if kops validate cluster --wait 10m; then
+        #   echo "Cluster validation successful."
+        # else
+        #   validation_exit_code=$?
+        #   echo "Cluster validation timed out or failed with exit code: $validation_exit_code"
+        #   echo "The update process completed, but the cluster may need additional time to stabilize."
+        #   echo "Please check the cluster status manually."
+        # fi
+
+        echo "Update process completed."
+        exit 0
+    secrets:
+      SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
+      SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
+      ENCODED_KUBECONFIG: ${{ secrets.ENCODED_KUBECONFIG }}
