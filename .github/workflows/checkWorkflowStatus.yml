@@ -23,7 +23,9 @@ jobs:
         id: check-parameter
         run: |
           WORKFLOW_NAME=$(echo ${{ github.workflow }} | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g')
+          echo $WORKFLOW_NAME
           STATUS=$(aws ssm get-parameter --name "/workflows/${WORKFLOW_NAME}/status" --query "Parameter.Value" --output text || echo "enabled")
+          echo $STATUS
           if [[ "$STATUS" == "enabled" ]]; then
             echo "scheduled_run=true" >> $GITHUB_OUTPUT
           else
