@@ -34,17 +34,13 @@ jobs:
         id: check-parameter
         run: |
           WORKFLOW_NAME=$(echo ${{ github.workflow }} | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g')
-          echo $WORKFLOW_NAME
-          STATUS=$(aws ssm get-parameter --name "/workflows/${WORKFLOW_NAME}/status" --query "Parameter.Value" --output text || echo "enabled")
-          echo $STATUS
-          if [[ "$STATUS" == "enabled" ]]; then
-            echo "scheduled_run=true" >> $GITHUB_OUTPUT
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            STATUS=$(aws ssm get-parameter --name "/workflows/${WORKFLOW_NAME}/status" --query "Parameter.Value" --output text || echo "enabled")
+            if [[ "$STATUS" == "enabled" ]]; then
+              echo "scheduled_run=true" >> $GITHUB_OUTPUT
+            else
+              echo "scheduled_run=false" >> $GITHUB_OUTPUT
+            fi
           else
-            echo "scheduled_run=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Check if scheduled event
-        run: |
-          if [ "${{ github.event_name }}" != "schedule" ]; then
             echo "scheduled_run=true" >> $GITHUB_OUTPUT
           fi
