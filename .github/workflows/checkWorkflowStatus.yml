@@ -1,0 +1,35 @@
+name: Check Workflow Status
+
+on:
+  workflow_call:
+    outputs:
+      scheduled_run:
+        description: "Whether the workflow should continue running as scheduled"
+        value: ${{ jobs.check-status.outputs.scheduled_run }}
+
+jobs:
+  check-status:
+    runs-on: self-hosted
+    outputs:
+      scheduled_run: ${{ steps.check-parameter.outputs.scheduled_run }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::521531168981:role/gha-parameter-store
+          aws-region: us-east-1
+
+      - name: Check parameter in AWS Parameter Store
+        id: check-parameter
+        run: |
+          WORKFLOW_NAME=$(echo ${{ github.workflow }} | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g')
+          STATUS=$(aws ssm get-parameter --name "/workflows/${WORKFLOW_NAME}/status" --query "Parameter.Value" --output text || echo "enabled")
+          if [[ "$STATUS" == "enabled" ]]; then
+            echo "scheduled_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "scheduled_run=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if scheduled event
+        if: github.event_name != 'schedule'
+        run: echo "scheduled_run=true" >> $GITHUB_OUTPUT
