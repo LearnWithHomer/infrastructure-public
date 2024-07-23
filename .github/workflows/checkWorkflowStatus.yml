@@ -45,4 +45,6 @@ jobs:
 
       - name: Check if scheduled event
         if: github.event_name != 'schedule'
-        run: echo "scheduled_run=true" >> $GITHUB_OUTPUT
+        run: |
+          echo "scheduled_run=true" >> $GITHUB_OUTPUT
+          echo $GITHUB_OUTPUT
