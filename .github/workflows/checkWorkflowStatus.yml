@@ -7,6 +7,10 @@ on:
         description: "Whether the workflow should continue running as scheduled"
         value: ${{ jobs.check-status.outputs.scheduled_run }}
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   check-status:
     runs-on: self-hosted
