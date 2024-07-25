@@ -114,19 +114,19 @@ jobs:
           if [ "$ACTION" = "start" ]; then
             echo "Attempting to start DB cluster $identifier"
             echo "Successfully started DB cluster $identifier"
-            # if aws rds start-db-clusters --db-cluster-identifier $identifier 2>&1 | grep -q "InvalidDBClusterState"; then
-            #   echo "Warning: Cluster $identifier is already running or in an invalid state for starting."
-            # else
-            #   echo "Successfully started DB cluster $identifier"
-            # fi
+            if aws rds start-db-clusters --db-cluster-identifier $identifier 2>&1 | grep -q "InvalidDBClusterState"; then
+              echo "Warning: Cluster $identifier is already running or in an invalid state for starting."
+            else
+              echo "Successfully started DB cluster $identifier"
+            fi
           elif [ "$ACTION" = "stop" ]; then
             echo "Attempting to stop DB cluster $identifier"
             echo "Successfully stopped DB cluster $identifier"
-            # if aws rds stop-db-clusters --db-cluster-identifier $identifier 2>&1 | grep -q "InvalidDBClusterState"; then
-            #   echo "Warning: Cluster $identifier is already stopped or in an invalid state for stopping."
-            # else
-            #   echo "Successfully stopped DB cluster $identifier"
-            # fi
+            if aws rds stop-db-clusters --db-cluster-identifier $identifier 2>&1 | grep -q "InvalidDBClusterState"; then
+              echo "Warning: Cluster $identifier is already stopped or in an invalid state for stopping."
+            else
+              echo "Successfully stopped DB cluster $identifier"
+            fi
           else
             echo "Error: Invalid action specified. Use 'start' or 'stop'."
             exit 1

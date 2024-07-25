@@ -77,10 +77,10 @@ jobs:
           echo "Upgrade available" > upgrade_status.txt
           
           echo "Upgrading cluster from ${old_version} to ${new_version}"
-          # kops upgrade cluster --yes
+          kops upgrade cluster --yes
           
           echo "Performing rolling update"
-          # kops rolling-update cluster --yes
+          kops rolling-update cluster --yes
         else
           echo "Up to date" > upgrade_status.txt
           echo "Cluster ${{ inputs.cluster_name }} is already on the latest version ${old_version}"

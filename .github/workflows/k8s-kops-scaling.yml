@@ -89,15 +89,15 @@ jobs:
       vpc_cidr: ${{ inputs.vpc_cidr }}
       kops-commands: |
         # Get current instance group configuration and store in Parameter Store
-        # aws ssm put-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --type "String" --value "$(kops get instancegroups -o yaml)" --overwrite
+        aws ssm put-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --type "String" --value "$(kops get instancegroups -o yaml)" --overwrite
 
         # Process Node instance groups
-        # kops get instancegroups -o yaml | \
-        # yq e 'select(.spec.role == "Node").spec.minSize = 0 | select(.spec.role == "Node").spec.maxSize = 1 | select(.spec.role == "Node").spec.machineType = "t2.micro"' - | \
-        # kops replace -f -
+        kops get instancegroups -o yaml | \
+        yq e 'select(.spec.role == "Node").spec.minSize = 0 | select(.spec.role == "Node").spec.maxSize = 1 | select(.spec.role == "Node").spec.machineType = "t2.micro"' - | \
+        kops replace -f -
 
         # Apply changes
-        # kops rolling-update cluster --yes
+        kops rolling-update cluster --yes
     secrets:
       SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
       SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
@@ -119,21 +119,21 @@ jobs:
       vpc_cidr: ${{ inputs.vpc_cidr }}
       kops-commands: |
         # Retrieve original configuration from Parameter Store and apply
-        # aws ssm get-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --query Parameter.Value --output text | \
-        # kops replace -f -
+        aws ssm get-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --query Parameter.Value --output text | \
+        kops replace -f -
 
         # Apply changes
-        # kops rolling-update cluster --yes
+        kops rolling-update cluster --yes
 
         # Wait for cluster to stabilize
-        # if kops validate cluster --wait 10m; then
-        #   echo "Cluster validation successful."
-        # else
-        #   validation_exit_code=$?
-        #   echo "Cluster validation timed out or failed with exit code: $validation_exit_code"
-        #   echo "The update process completed, but the cluster may need additional time to stabilize."
-        #   echo "Please check the cluster status manually."
-        # fi
+        if kops validate cluster --wait 10m; then
+          echo "Cluster validation successful."
+        else
+          validation_exit_code=$?
+          echo "Cluster validation timed out or failed with exit code: $validation_exit_code"
+          echo "The update process completed, but the cluster may need additional time to stabilize."
+          echo "Please check the cluster status manually."
+        fi
 
         echo "Update process completed."
         exit 0
