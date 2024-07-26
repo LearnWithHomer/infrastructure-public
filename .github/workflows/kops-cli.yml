@@ -73,7 +73,7 @@ jobs:
           unzip awscliv2.zip
           sudo ./aws/install
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -115,7 +115,17 @@ jobs:
           # Run Kops Commands
           ${{ inputs.kops-commands }}
 
-          # Output the results
-          echo "upgrade_status=$(cat upgrade_status.txt)" >> $GITHUB_OUTPUT
-          echo "old_version=$(cat old_version.txt)" >> $GITHUB_OUTPUT
-          echo "new_version=$(cat new_version.txt)" >> $GITHUB_OUTPUT
+          # Check and output upgrade_status if the file exists
+          if [ -f upgrade_status.txt ]; then
+             echo "upgrade_status=$(cat upgrade_status.txt)" >> $GITHUB_OUTPUT
+          fi
+
+          # Check and output old_version if the file exists
+          if [ -f old_version.txt ]; then
+              echo "old_version=$(cat old_version.txt)" >> $GITHUB_OUTPUT
+          fi
+
+          # Check and output new_version if the file exists
+          if [ -f new_version.txt ]; then
+              echo "new_version=$(cat new_version.txt)" >> $GITHUB_OUTPUT
+          fi
