@@ -16,6 +16,10 @@ on:
       checkout_dir:
         required: false
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   push_image_to_registry:
     name: PushImage
