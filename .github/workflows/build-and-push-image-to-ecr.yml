@@ -3,7 +3,7 @@ name: Push image to Container Registry
 on:
   workflow_call:
     inputs:
-      role-arn:
+      role_arn:
         required: true
         type: string
     secrets:
