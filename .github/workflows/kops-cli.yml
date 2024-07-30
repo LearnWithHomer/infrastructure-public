@@ -81,20 +81,21 @@ jobs:
           aws-region: ${{ inputs.aws_region }}
 
       - name: Setup Kubectl
-        run: |
-          # Install kubectl
-          curl -LO "https://dl.k8s.io/release/${{ inputs.kubectl_version }}/bin/linux/amd64/kubectl"
-          sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: ${{ inputs.kubectl_version }}
 
-          # Setup KUBECONFIG
-          echo "${{secrets.ENCODED_KUBECONFIG}}" | base64 -d > kubeconfig.yaml
-          cat kubeconfig.yaml
+      - name: Setup Kubeconfig
+        run: |
+          echo "${{ secrets.ENCODED_KUBECONFIG" | base64 -d > kubeconfig.yaml
           chmod 600 kubeconfig.yaml
-          export KUBECONFIG=./kubeconfig.yaml
+          export KUBECONFIG="./kubeconfig.yaml"
+
 
       - name: Execute Kops CLI commands
         id: kops-exec
         run: |
+          echo "$KUBECONFIG"
           # Export environment variables
           export CLUSTER_NAME=${{ inputs.cluster_name }}
           export CLUSTER_DOMAIN=${{ inputs.cluster_domain }}
