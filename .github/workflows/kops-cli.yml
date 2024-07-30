@@ -100,6 +100,7 @@ jobs:
 
           # Setup KUBECONFIG
           echo "$ENCODED_KUBECONFIG" | base64 -d > kubeconfig.yaml
+          cat kubeconfig.yaml
           chmod 600 kubeconfig.yaml
           export KUBECONFIG=./kubeconfig.yaml
 
