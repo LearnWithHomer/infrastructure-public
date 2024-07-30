@@ -87,7 +87,7 @@ jobs:
 
       - name: Setup Kubeconfig
         run: |
-          echo "${{ secrets.ENCODED_KUBECONFIG" | base64 -d > kubeconfig.yaml
+          echo "${{ secrets.ENCODED_KUBECONFIG }}" | base64 -d > kubeconfig.yaml
           chmod 600 kubeconfig.yaml
           export KUBECONFIG="./kubeconfig.yaml"
 
