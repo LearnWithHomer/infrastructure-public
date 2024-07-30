@@ -87,7 +87,7 @@ jobs:
           sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
           # Setup KUBECONFIG
-          echo "$ENCODED_KUBECONFIG" | base64 -d > kubeconfig.yaml
+          echo "${{secrets.ENCODED_KUBECONFIG}}" | base64 -d > kubeconfig.yaml
           cat kubeconfig.yaml
           chmod 600 kubeconfig.yaml
           export KUBECONFIG=./kubeconfig.yaml
