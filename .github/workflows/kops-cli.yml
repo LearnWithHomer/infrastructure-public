@@ -80,6 +80,18 @@ jobs:
           role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.role_name }}
           aws-region: ${{ inputs.aws_region }}
 
+      - name: Setup Kubectl
+        run: |
+          # Install kubectl
+          curl -LO "https://dl.k8s.io/release/${{ inputs.kubectl_version }}/bin/linux/amd64/kubectl"
+          sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+          # Setup KUBECONFIG
+          echo "$ENCODED_KUBECONFIG" | base64 -d > kubeconfig.yaml
+          cat kubeconfig.yaml
+          chmod 600 kubeconfig.yaml
+          export KUBECONFIG=./kubeconfig.yaml
+
       - name: Execute Kops CLI commands
         id: kops-exec
         run: |
@@ -93,16 +105,6 @@ jobs:
           export KOPS_STATE_STORE="s3://${{ inputs.kops_state_bucket }}/${{ inputs.cluster_name }}.${{ inputs.cluster_domain }}/"
           export VPC_ID=${{ inputs.vpc_id }}
           export VPC_CIDR=${{ inputs.vpc_cidr }}
-
-          # Install kubectl
-          curl -LO "https://dl.k8s.io/release/${{ inputs.kubectl_version }}/bin/linux/amd64/kubectl"
-          sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-
-          # Setup KUBECONFIG
-          echo "$ENCODED_KUBECONFIG" | base64 -d > kubeconfig.yaml
-          cat kubeconfig.yaml
-          chmod 600 kubeconfig.yaml
-          export KUBECONFIG=./kubeconfig.yaml
 
           # Setup Kops
           curl -Lo kops https://github.com/kubernetes/kops/releases/download/$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | grep tag_name | cut -d '"' -f 4)/kops-linux-amd64
