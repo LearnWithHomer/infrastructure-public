@@ -50,6 +50,10 @@ on:
       ENCODED_KUBECONFIG:
         required: true
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   check-upgrade-k8s:
     uses: LearnWithHomer/infrastructure-public/.github/workflows/kops-cli.yml@main

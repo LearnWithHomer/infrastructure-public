@@ -57,6 +57,10 @@ on:
       ENCODED_KUBECONFIG:
         required: true
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   determine-action:
     runs-on: self-hosted
