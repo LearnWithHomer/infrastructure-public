@@ -92,15 +92,20 @@ jobs:
       vpc_id: ${{ inputs.vpc_id }}
       vpc_cidr: ${{ inputs.vpc_cidr }}
       kops-commands: |
+        set -e
+
         # Check if the cluster is already scaled down
         current_config=$(kops get instancegroups -o yaml)
-        is_scaled_down=$(echo "$current_config" | yq e 'all(.spec.role == "Node" and .spec.minSize == 0 and .spec.maxSize == 1 and .spec.machineType == "t2.micro")' -)
+
+        # Use yq to check if any Node groups are not scaled down
+        is_scaled_down=$(echo "$current_config" | yq e '.[] | select(.spec.role == "Node") | .spec.minSize == 0 and .spec.maxSize == 1 and .spec.machineType == "t2.micro"' -)
 
         if [ "$is_scaled_down" == "true" ]; then
           echo "Cluster is already scaled down. No action needed."
         else
+          echo "Cluster is not scaled down. Proceeding with scale down process."
+
           # Get current instance group configuration and store in Parameter Store
-          # Only update if the cluster is not already scaled down
           aws ssm put-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --type "String" --value "$current_config" --overwrite
 
           # Process Node instance groups
