@@ -92,16 +92,25 @@ jobs:
       vpc_id: ${{ inputs.vpc_id }}
       vpc_cidr: ${{ inputs.vpc_cidr }}
       kops-commands: |
-        # Get current instance group configuration and store in Parameter Store
-        aws ssm put-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --type "String" --value "$(kops get instancegroups -o yaml)" --overwrite
+        # Check if the cluster is already scaled down
+        current_config=$(kops get instancegroups -o yaml)
+        is_scaled_down=$(echo "$current_config" | yq e 'all(.spec.role == "Node" and .spec.minSize == 0 and .spec.maxSize == 1 and .spec.machineType == "t2.micro")' -)
 
-        # Process Node instance groups
-        kops get instancegroups -o yaml | \
-        yq e 'select(.spec.role == "Node").spec.minSize = 0 | select(.spec.role == "Node").spec.maxSize = 1 | select(.spec.role == "Node").spec.machineType = "t2.micro"' - | \
-        kops replace -f -
+        if [ "$is_scaled_down" == "true" ]; then
+          echo "Cluster is already scaled down. No action needed."
+        else
+          # Get current instance group configuration and store in Parameter Store
+          # Only update if the cluster is not already scaled down
+          aws ssm put-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --type "String" --value "$current_config" --overwrite
 
-        # Apply changes
-        kops rolling-update cluster --yes
+          # Process Node instance groups
+          echo "$current_config" | \
+          yq e 'select(.spec.role == "Node").spec.minSize = 0 | select(.spec.role == "Node").spec.maxSize = 1 | select(.spec.role == "Node").spec.machineType = "t2.micro"' - | \
+          kops replace -f -
+
+          # Apply changes
+          kops rolling-update cluster --yes
+        fi
     secrets:
       SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
       SSL_CERT_ARN_INTERNAL: ${{ secrets.SSL_CERT_ARN_INTERNAL }}
