@@ -40,6 +40,18 @@ on:
         required: false
         type: string
         default: "172.200.0.0/16"
+      minSize:
+        required: false
+        type: number
+        default: 0
+      maxSize:
+        required: false
+        type: number
+        default: 1
+      machineType:
+        required: false
+        type: string
+        default: "t2.micro"
       action:
         required: false
         type: string
@@ -94,27 +106,30 @@ jobs:
       kops-commands: |
         set -e
 
-        # Check if the cluster is already scaled down
-        current_config=$(kops get instancegroups -o yaml)
+        # Check the last operation from Parameter Store
+        last_operation=$(aws ssm get-parameter --name "/kops/${{ inputs.cluster_name }}/last-operation" --query "Parameter.Value" --output text || echo "unknown")
 
-        # Use yq to check if any Node groups are not scaled down
-        is_scaled_down=$(echo "$current_config" | yq e 'all(.spec.role == "Node" and .spec.minSize == 0 and .spec.maxSize == 1 and .spec.machineType == "t2.micro")' -)
-
-        if $is_scaled_down; then
-          echo "Cluster is already scaled down. No action needed."
+        if [[ "$last_operation" == "scale-down" ]]; then
+            echo "The cluster was already scaled down in the last operation. No action needed."
         else
-          echo "Cluster is not scaled down. Proceeding with scale down process."
+            echo "Last operation was not scale-down. Proceeding with scale down process."
 
-          # Get current instance group configuration and store in Parameter Store
-          aws ssm put-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --type "String" --value "$current_config" --overwrite
+            # Get current instance group configuration and store in Parameter Store
+            current_config=$(kops get instancegroups -o yaml)
+            aws ssm put-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --type "String" --value "$current_config" --overwrite
 
-          # Process Node instance groups
-          echo "$current_config" | \
-          yq e 'select(.spec.role == "Node").spec.minSize = 0 | select(.spec.role == "Node").spec.maxSize = 1 | select(.spec.role == "Node").spec.machineType = "t2.micro"' - | \
-          kops replace -f -
+            # Process Node instance groups
+            echo "$current_config" | \
+            yq e 'select(.spec.role == "Node").spec.minSize = ${{ inputs.minSize }} | select(.spec.role == "Node").spec.maxSize = ${{ inputs.maxSize }} | select(.spec.role == "Node").spec.machineType = "${{ inputs.machineType }}"' - | \
+            kops replace -f -
 
-          # Apply changes
-          kops rolling-update cluster --yes
+            # Apply changes
+            kops rolling-update cluster --yes
+
+            # Update the last operation in Parameter Store
+            aws ssm put-parameter --name "/kops/${{ inputs.cluster_name }}/last-operation" --type "String" --value "scale-down" --overwrite
+
+            echo "Scale down operation completed and recorded in Parameter Store."
         fi
     secrets:
       SSL_CERT_ARN: ${{ secrets.SSL_CERT_ARN }}
@@ -136,6 +151,18 @@ jobs:
       vpc_id: ${{ inputs.vpc_id }}
       vpc_cidr: ${{ inputs.vpc_cidr }}
       kops-commands: |
+        set -e
+
+        # Check the last operation from Parameter Store
+        last_operation=$(aws ssm get-parameter --name "/kops/${{ inputs.cluster_name }}/last-operation" --query "Parameter.Value" --output text || echo "unknown")
+
+        if [[ "$last_operation" == "scale-up" ]]; then
+            echo "The cluster was already scaled up in the last operation. No action needed."
+            exit 0
+        fi
+
+        echo "Last operation was not scale-up. Proceeding with scale up process."
+
         # Retrieve original configuration from Parameter Store and apply
         aws ssm get-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --query Parameter.Value --output text | \
         kops replace -f -
@@ -144,13 +171,24 @@ jobs:
         kops rolling-update cluster --yes
 
         # Wait for cluster to stabilize
-        if kops validate cluster --wait 10m; then
-          echo "Cluster validation successful."
+        if kops validate cluster --wait 15m; then
+            echo "Cluster validation successful."
+            validation_success=true
         else
-          validation_exit_code=$?
-          echo "Cluster validation timed out or failed with exit code: $validation_exit_code"
-          echo "The update process completed, but the cluster may need additional time to stabilize."
-          echo "Please check the cluster status manually."
+            validation_exit_code=$?
+            echo "Cluster validation timed out or failed with exit code: $validation_exit_code"
+            echo "The update process completed, but the cluster may need additional time to stabilize."
+            echo "Please check the cluster status manually."
+            validation_success=false
+        fi
+
+        # Update the last operation in Parameter Store
+        if $validation_success; then
+            aws ssm put-parameter --name "/kops/${{ inputs.cluster_name }}/last-operation" --type "String" --value "scale-up" --overwrite
+            echo "Scale up operation completed successfully and recorded in Parameter Store."
+        else
+            aws ssm put-parameter --name "/kops/${{ inputs.cluster_name }}/last-operation" --type "String" --value "scale-up-incomplete" --overwrite
+            echo "Scale up operation may not have completed successfully. Status recorded in Parameter Store."
         fi
 
         echo "Update process completed."
