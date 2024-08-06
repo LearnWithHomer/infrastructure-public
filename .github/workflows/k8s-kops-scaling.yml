@@ -107,7 +107,7 @@ jobs:
         set -e
 
         # Check the last operation from Parameter Store
-        last_operation=$(aws ssm get-parameter --name "/kops/${{ inputs.cluster_name }}/last-operation" --query "Parameter.Value" --output text)
+        last_operation=$(aws ssm get-parameter --name "/kops/${{ inputs.cluster_name }}/last-operation" --query "Parameter.Value" --output text || echo "unknown")
 
         if [[ "$last_operation" == "scale-down" ]]; then
             echo "The cluster was already scaled down in the last operation. No action needed."
