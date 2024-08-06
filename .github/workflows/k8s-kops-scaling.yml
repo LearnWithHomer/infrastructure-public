@@ -95,12 +95,12 @@ jobs:
         set -e
 
         # Check if the cluster is already scaled down
-        current_config=$(kops get instancegroups -o json)
+        current_config=$(kops get instancegroups -o yaml)
 
-        # Use jq to check if any Node groups are not scaled down
-        is_scaled_down=$(echo "$current_config" | jq 'all(.[] | select(.spec.role == "Node") | .spec.minSize == 0 and .spec.maxSize == 1 and .spec.machineType == "t2.micro")')
+        # Use yq to check if any Node groups are not scaled down
+        is_scaled_down=$(echo "$current_config" | yq e 'all(.spec.role == "Node" and .spec.minSize == 0 and .spec.maxSize == 1 and .spec.machineType == "t2.micro")' -)
 
-        if [ "$is_scaled_down" = "true" ]; then
+        if $is_scaled_down; then
           echo "Cluster is already scaled down. No action needed."
         else
           echo "Cluster is not scaled down. Proceeding with scale down process."
@@ -109,7 +109,9 @@ jobs:
           aws ssm put-parameter --name "/kops/${{ inputs.cluster_name }}/ig-config" --type "String" --value "$current_config" --overwrite
 
           # Process Node instance groups
-          echo "$current_config" | jq '.[] | select(.spec.role == "Node") | .spec.minSize = 0 | .spec.maxSize = 1 | .spec.machineType = "t2.micro"' | kops replace -f -
+          echo "$current_config" | \
+          yq e 'select(.spec.role == "Node").spec.minSize = 0 | select(.spec.role == "Node").spec.maxSize = 1 | select(.spec.role == "Node").spec.machineType = "t2.micro"' - | \
+          kops replace -f -
 
           # Apply changes
           kops rolling-update cluster --yes
