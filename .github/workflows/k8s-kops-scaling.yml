@@ -98,7 +98,7 @@ jobs:
         current_config=$(kops get instancegroups -o yaml)
 
         # Use yq to check if any Node groups are not scaled down
-        is_scaled_down=$(echo "$current_config" | yq e 'all(.spec.role == "Node" and .spec.minSize == 0 and .spec.maxSize == 1 and .spec.machineType == "t2.micro")' -)
+        is_scaled_down=$(echo "$current_config" | yq e 'all( .[] | select(.spec.role == "Node") | .spec.minSize == 0 and .spec.maxSize == 1 and .spec.machineType == "t2.micro")' -)
 
         if $is_scaled_down; then
           echo "Cluster is already scaled down. No action needed."
