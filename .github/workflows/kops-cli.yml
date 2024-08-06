@@ -111,8 +111,12 @@ jobs:
           sudo mv kops /usr/local/bin/kops
 
           # Install yq
-          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
-          sudo chmod +x /usr/bin/yq
+          # sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          # sudo chmod +x /usr/bin/yq
+
+          # Install jq
+          sudo apt-get update
+          sudo apt-get install jq
 
           # Run Kops Commands
           ${{ inputs.kops-commands }}
