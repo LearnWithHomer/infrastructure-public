@@ -9,7 +9,9 @@ on:
       ecr_repo_name:
         required: false
         type: string
-    secrets: 
+    outputs:
+      image_tag: ${{ steps.build_image.outputs.image_tag }}
+    secrets:
       aws_region:
         required: true
       ecr_repo:
@@ -34,38 +36,39 @@ jobs:
       # IMAGE_TAG: ${{ github.ref_name }}
 
     steps:
-    # Checks out the current repository
-    - name: Check out code
-      uses: actions/checkout@v3
-      with:
-        sparse-checkout: |
-          ${{ secrets.checkout_dir }}
+      # Checks out the current repository
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          sparse-checkout: |
+            ${{ secrets.checkout_dir }}
 
-    # Allows use of some extra context env vars e.g., $CI_SHA_SHORT
-    - name: set-env-vars
-      uses: FranzDiebold/github-env-vars-action@v2
+      # Allows use of some extra context env vars e.g., $CI_SHA_SHORT
+      - name: set-env-vars
+        uses: FranzDiebold/github-env-vars-action@v2
 
-    # Confuguring AWS on the runner
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: ${{ inputs.role_arn }}
-        aws-region: ${{ secrets.aws_region }}
+      # Confuguring AWS on the runner
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.role_arn }}
+          aws-region: ${{ secrets.aws_region }}
 
-    # Logs into ECR, and fetches the container registries
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+      # Logs into ECR, and fetches the container registries
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
-    # Build and tag images
-    - name: Build, tag, and push image to Amazon ECR
-      id: build_image
-      env:
-        # Container resgistries are gotten from the previous step
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ inputs.ecr_repo_name }}
-      run: |
-        IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9]/-/g')
-        echo "IMAGE_TAG=${IMAGE_TAG}" >> $IMAGE_TAG
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT --build-arg GH_PKG_TOKEN=${{ secrets.gh_pkg_token }} .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
+      # Build and tag images
+      - name: Build, tag, and push image to Amazon ECR
+        id: build_image
+        env:
+          # Container resgistries are gotten from the previous step
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ inputs.ecr_repo_name }}
+        run: |
+          IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9]/-/g')
+          FULL_IMAGE_TAG="${IMAGE_TAG}-${CI_SHA_SHORT}"
+          echo "image_tag=${FULL_IMAGE_TAG}" >> $GITHUB_OUTPUT
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$FULL_IMAGE_TAG --build-arg GH_PKG_TOKEN=${{ secrets.gh_pkg_token }} .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$FULL_IMAGE_TAG

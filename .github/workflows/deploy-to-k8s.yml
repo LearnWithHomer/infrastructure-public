@@ -12,6 +12,9 @@ on:
       ecr_repo_name:
         required: false
         type: string
+      image_tag:
+        required: true
+        type: string
     secrets:
       kubeconfig:
         required: true
@@ -31,75 +34,76 @@ jobs:
       APP_ENV: ${{ inputs.app_env }}
 
     steps:
-    # Set kubeconfig context for Staging cluster
-    - name: Set Kubeconfig
-      uses: azure/k8s-set-context@v2
-      with:
-        method: kubeconfig
-        kubeconfig: ${{ secrets.kubeconfig }}
+      # Set kubeconfig context for Staging cluster
+      - name: Set Kubeconfig
+        uses: azure/k8s-set-context@v2
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.kubeconfig }}
 
-    # Helm is required to generate the manifests
-    - name: Install Helm
-      run: |
-        wget https://get.helm.sh/helm-v3.11.0-linux-amd64.tar.gz
-        tar xvf helm-v3.11.0-linux-amd64.tar.gz
-        sudo mv linux-amd64/helm /usr/local/bin
-        echo "Installed helm"
+      # Helm is required to generate the manifests
+      - name: Install Helm
+        run: |
+          wget https://get.helm.sh/helm-v3.11.0-linux-amd64.tar.gz
+          tar xvf helm-v3.11.0-linux-amd64.tar.gz
+          sudo mv linux-amd64/helm /usr/local/bin
+          echo "Installed helm"
 
-    - uses: azure/setup-kubectl@v3
-      id: install
+      - uses: azure/setup-kubectl@v3
+        id: install
 
-    # Install yq - yaml processor
-    - name: Install yq
-      run: |
-        sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-        sudo chmod a+x /usr/local/bin/yq
-        yq --version
-        echo "Installed yq"
+      # Install yq - yaml processor
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod a+x /usr/local/bin/yq
+          yq --version
+          echo "Installed yq"
 
-    # Checks out the current repository
-    - name: Check out code
-      uses: actions/checkout@v3
+      # Checks out the current repository
+      - name: Check out code
+        uses: actions/checkout@v3
 
-    # Allows use of some extra context env vars e.g., $CI_SHA_SHORT
-    - name: set-env-vars
-      uses: FranzDiebold/github-env-vars-action@v2
+      # Allows use of some extra context env vars e.g., $CI_SHA_SHORT
+      - name: set-env-vars
+        uses: FranzDiebold/github-env-vars-action@v2
 
-    # This generates the deployment manifests for specified environment
-    - name: Generate manifest for '${{ env.APP_ENV }}'
-      run: |
-        IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9]/-/g')
-        echo "IMAGE_TAG=${IMAGE_TAG}" >> $IMAGE_TAG
+      # This generates the deployment manifests for specified environment
+      - name: Generate manifest for '${{ env.APP_ENV }}'
+        run: |
+          IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9]/-/g')
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $IMAGE_TAG
 
-        cd $HELM_PATH
-        export DEPLOY_NAME=$(yq e '.name' ./values.yaml)
-        echo ">> DEPLOY_NAME: $DEPLOY_NAME"
+          cd $HELM_PATH
+          export DEPLOY_NAME=$(yq e '.name' ./values.yaml)
+          echo ">> DEPLOY_NAME: $DEPLOY_NAME"
 
-        [ $APP_ENV == devopsTest ] && export echo "APP_ENV=dev" >> $GITHUB_ENV
-        echo ">> APP_ENV: $APP_ENV"
+          [ $APP_ENV == devopsTest ] && export echo "APP_ENV=dev" >> $GITHUB_ENV
+          echo ">> APP_ENV: $APP_ENV"
 
-        export NAMESPACE=$(yq e '.namespace' ./values-$APP_ENV.yaml)
-        echo ">> Namespace: $NAMESPACE"
+          export NAMESPACE=$(yq e '.namespace' ./values-$APP_ENV.yaml)
+          echo ">> Namespace: $NAMESPACE"
 
-        export REPLICAS=$(kubectl get deployment $DEPLOY_NAME -n $NAMESPACE -o=jsonpath={.spec.replicas})
-        [ -z $REPLICAS ] && export REPLICAS=$(yq e '.replicas' ./values.yaml)
-        echo ">> Number of replicas: $REPLICAS"
+          export REPLICAS=$(kubectl get deployment $DEPLOY_NAME -n $NAMESPACE -o=jsonpath={.spec.replicas})
+          [ -z $REPLICAS ] && export REPLICAS=$(yq e '.replicas' ./values.yaml)
+          echo ">> Number of replicas: $REPLICAS"
 
-        echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
+          echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
 
-        helm template . -f ./values.yaml -f ./values-$APP_ENV.yaml --set imageTag=$IMAGE_TAG-$CI_SHA_SHORT --set replicas=$REPLICAS > ${{ runner.temp }}/manifest.yaml
-        ls ${{ runner.temp }}
-        echo "Done: Generated manifest!"
+          helm template . -f ./values.yaml -f ./values-$APP_ENV.yaml --set image.tag=${{ inputs.image_tag }} --set replicas=$REPLICAS > ${{ runner.temp }}/manifest.yaml
+          ls ${{ runner.temp }}
+          cat ${{ runner.temp }}/manifest.yaml
+          echo "Done: Generated manifest!"
 
-    # This deploys to staging/test cluster, for the specified env
-    - name: Deploy to '${{ env.APP_ENV }}'
-      uses: Azure/k8s-deploy@v4.10.0
-      env:
-        # Container resgistries are gotten from a previous step
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ inputs.ecr_repo_name }}
-      with:
-        namespace: ${{ env.NAMESPACE }}
-        manifests: |
+      # This deploys to staging/test cluster, for the specified env
+      - name: Deploy to '${{ env.APP_ENV }}'
+        uses: Azure/k8s-deploy@v4.10.0
+        env:
+          # Container resgistries are gotten from a previous step
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ inputs.ecr_repo_name }}
+        with:
+          namespace: ${{ env.NAMESPACE }}
+          manifests: |
             ${{ runner.temp }}/manifest.yaml
-        images: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
+          images: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
