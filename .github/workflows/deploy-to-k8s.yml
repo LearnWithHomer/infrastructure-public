@@ -25,7 +25,7 @@ jobs:
 
     # Setting environment variables
     env:
-      ECR_REPOSITORY: ${{ secrets.ecr_repo }}/${{ inputs.ecr_repo_name }}
+      ECR_REPOSITORY: ${{ secrets.ecr_repo }}
       # IMAGE_TAG: ${{ github.ref_name }}
       HELM_PATH: ${{ github.workspace }}/${{ inputs.rel_helm_path }}
       APP_ENV: ${{ inputs.app_env }}
