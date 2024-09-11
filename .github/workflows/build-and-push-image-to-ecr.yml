@@ -6,6 +6,9 @@ on:
       role_arn:
         required: true
         type: string
+      ecr_repo_name:
+        required: false
+        type: string
     secrets: 
       aws_region:
         required: true
@@ -60,6 +63,7 @@ jobs:
       env:
         # Container resgistries are gotten from the previous step
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ inputs.ecr_repo_name }}
       run: |
         IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9]/-/g')
         echo "IMAGE_TAG=${IMAGE_TAG}" >> $IMAGE_TAG
