@@ -6,6 +6,10 @@ on:
       role_arn:
         required: true
         type: string
+      runs_on:
+        required: false
+        type: string
+        default: 'self-hosted'        
     secrets:
       aws_region:
         required: true
@@ -16,6 +20,7 @@ on:
       checkout_dir:
         required: false
 
+
 permissions:
   id-token: write
   contents: read
@@ -23,7 +28,7 @@ permissions:
 jobs:
   push_image_to_registry:
     name: PushImage
-    runs-on: self-hosted
+    runs-on: ${{ inputs.runs_on }}
 
     # Setting environment variables
     env:
