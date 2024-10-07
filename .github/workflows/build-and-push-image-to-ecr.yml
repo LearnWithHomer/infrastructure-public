@@ -54,25 +54,29 @@ jobs:
 
     - name: Check if image tag exists
       id: check-tag
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
         IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9]/-/g')
         FULL_TAG="${IMAGE_TAG}-${CI_SHA_SHORT}"
         echo "FULL_TAG=${FULL_TAG}" >> $GITHUB_ENV
 
-        if aws ecr describe-images --repository-name $ECR_REPOSITORY --image-ids imageTag=$FULL_TAG --region ${{ secrets.aws_region }} > /dev/null 2>&1; then
+        if aws ecr describe-images --repository-name $ECR_REPOSITORY --image-ids imageTag=$FULL_TAG --region ${{ secrets.aws_region }} &>/dev/null; then
           echo "Tag exists. Skipping build and push."
-          echo "tag_exists=true" >> $GITHUB_OUTPUT
+          echo "TAG_EXISTS=true" >> $GITHUB_ENV
         else
           echo "Tag does not exist. Proceeding with build and push."
-          echo "tag_exists=false" >> $GITHUB_OUTPUT
+          echo "TAG_EXISTS=false" >> $GITHUB_ENV
         fi
 
     - name: Build, tag, and push image to Amazon ECR
-      if: steps.check-tag.outputs.tag_exists == 'false'
+      if: env.TAG_EXISTS == 'false'
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
+        echo "Building and pushing image with tag: $FULL_TAG"
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$FULL_TAG --build-arg GH_PKG_TOKEN=${{ secrets.gh_pkg_token }} .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$FULL_TAG
+
+    - name: Skip build and push
+      if: env.TAG_EXISTS == 'true'
+      run: |
+        echo "Image with tag $FULL_TAG already exists. Skipping build and push."
