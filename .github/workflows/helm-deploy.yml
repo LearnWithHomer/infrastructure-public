@@ -1,0 +1,51 @@
+# .github/workflows/deploy.yml
+name: Helm Deploy
+
+on:
+  workflow_call:
+    inputs:
+      runs_on:
+        required: false
+        type: string
+        default: 'self-hosted' 
+      release:
+        required: true
+        type: string
+      chart:
+        required: true
+        type: string
+      namespace:
+        required: true
+        type: string
+        default: 'default' 
+      name:
+        required: true
+        type: string
+      value-file:
+        required: true
+        type: string      
+    secrets:
+      kubeconfig:
+        required: true
+      token:
+        required: true
+
+jobs:
+  deployment:
+    runs-on: ${{ inputs.runs_on }}
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: 'Deploy'
+      uses: 'deliverybot/helm@v1'
+      with:
+        release: ${{ inputs.release }}
+        namespace: ${{ inputs.namespace }}
+        chart: ${{ inputs.chart }}
+        token: '${{ secrets.token }}'
+        values: |
+          name: ${{ inputs.name }}
+        value-files: >-
+          [${{ inputs.value-file }}]
+      env:
+        KUBECONFIG_FILE: '${{ secrets.kubeconfig }}'
