@@ -20,7 +20,10 @@ on:
         default: 'default' 
       value-file:
         required: true
-        type: string      
+        type: string
+      add-repo:
+        required: true
+        type: string       
     secrets:
       kubeconfig:
         required: true
@@ -48,6 +51,11 @@ jobs:
 
     - uses: azure/setup-kubectl@v3
       id: install-k8s
+
+    - name: Add Repo
+      continue-on-error: true
+      run: |
+        ${{ inputs.add-repo }}
 
     - name: Install
       id: install
