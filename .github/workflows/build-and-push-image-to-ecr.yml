@@ -77,19 +77,6 @@ jobs:
           echo "TAG_EXISTS=false" >> $GITHUB_ENV
         fi
 
-        echo "Content of GITHUB_ENV:"
-        cat $GITHUB_ENV
-
-        echo "Environment variables:"
-        env
-
-    - name: Debug Environment
-      run: |
-        echo "TAG_EXISTS: ${{ env.TAG_EXISTS }}"
-        echo "FULL_TAG: ${{ env.FULL_TAG }}"
-        echo "All environment variables:"
-        env
-
     - name: Build, tag, and push image to Amazon ECR
       if: env.TAG_EXISTS == 'false'
       env:
@@ -99,9 +86,3 @@ jobs:
         echo "Building and pushing image with tag: $FULL_TAG"
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$FULL_TAG --build-arg GH_PKG_TOKEN=${{ secrets.gh_pkg_token }} .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$FULL_TAG
-
-    - name: Skip build and push
-      if: env.TAG_EXISTS == 'true'
-      run: |
-        echo "TAG_EXISTS is '${{ env.TAG_EXISTS }}'"
-        echo "Image with tag $FULL_TAG already exists. Skipping build and push."
