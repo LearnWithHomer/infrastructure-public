@@ -42,6 +42,13 @@ jobs:
     - name: set-env-vars
       uses: FranzDiebold/github-env-vars-action@v2
 
+    - name: Install AWS CLI
+      run: |
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
