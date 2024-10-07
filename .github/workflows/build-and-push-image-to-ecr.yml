@@ -78,6 +78,7 @@ jobs:
         fi
 
     - name: Build, tag, and push image to Amazon ECR
+      id: build_image
       if: env.TAG_EXISTS == 'false'
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
