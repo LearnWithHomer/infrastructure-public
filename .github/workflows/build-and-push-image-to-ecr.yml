@@ -9,7 +9,7 @@ on:
       runs_on:
         required: false
         type: string
-        default: 'self-hosted'        
+        default: 'self-hosted'
     secrets:
       aws_region:
         required: true
@@ -20,7 +20,6 @@ on:
       checkout_dir:
         required: false
 
-
 permissions:
   id-token: write
   contents: read
@@ -30,43 +29,61 @@ jobs:
     name: PushImage
     runs-on: ${{ inputs.runs_on }}
 
-    # Setting environment variables
     env:
       ECR_REPOSITORY: ${{ secrets.ecr_repo }}
-      # IMAGE_TAG: ${{ github.ref_name }}
 
     steps:
-    # Checks out the current repository
     - name: Check out code
       uses: actions/checkout@v3
       with:
         sparse-checkout: |
           ${{ secrets.checkout_dir }}
 
-    # Allows use of some extra context env vars e.g., $CI_SHA_SHORT
     - name: set-env-vars
       uses: FranzDiebold/github-env-vars-action@v2
 
-    # Confuguring AWS on the runner
+    - name: Install AWS CLI
+      run: |
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ inputs.role_arn }}
         aws-region: ${{ secrets.aws_region }}
 
-    # Logs into ECR, and fetches the container registries
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    # Build and tag images
+    - name: Check if image tag exists
+      id: check-tag
+      run: |
+        echo "Starting check-tag step"
+        IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9]/-/g')
+        FULL_TAG="${IMAGE_TAG}-${CI_SHA_SHORT}"
+        echo "Constructed FULL_TAG: $FULL_TAG"
+        echo "FULL_TAG=${FULL_TAG}" >> $GITHUB_ENV
+
+        echo "Checking for image: $ECR_REPOSITORY:$FULL_TAG in region ${{ secrets.aws_region }}"
+        if aws ecr describe-images --repository-name $ECR_REPOSITORY --image-ids imageTag=$FULL_TAG --region ${{ secrets.aws_region }}; then
+          echo "Tag exists. Skipping build and push."
+          echo "TAG_EXISTS=true" >> $GITHUB_ENV
+        else
+          echo "Tag does not exist. Proceeding with build and push."
+          echo "TAG_EXISTS=false" >> $GITHUB_ENV
+        fi
+
     - name: Build, tag, and push image to Amazon ECR
       id: build_image
+      if: env.TAG_EXISTS == 'false'
       env:
-        # Container resgistries are gotten from the previous step
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
-        IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9]/-/g')
-        echo "IMAGE_TAG=${IMAGE_TAG}" >> $IMAGE_TAG
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT --build-arg GH_PKG_TOKEN=${{ secrets.gh_pkg_token }} .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-$CI_SHA_SHORT
+        echo "TAG_EXISTS is '${{ env.TAG_EXISTS }}'"
+        echo "Building and pushing image with tag: $FULL_TAG"
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$FULL_TAG --build-arg GH_PKG_TOKEN=${{ secrets.gh_pkg_token }} .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$FULL_TAG
