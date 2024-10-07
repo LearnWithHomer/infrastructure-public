@@ -47,7 +47,7 @@ jobs:
         echo "Installed helm"
 
     - uses: azure/setup-kubectl@v3
-      id: install
+      id: install-k8s
 
     - name: Install
       id: install
