@@ -23,7 +23,10 @@ on:
         type: string
       add-repo:
         required: true
-        type: string       
+        type: string 
+      extra-args:
+        required: false
+        type: string
     secrets:
       kubeconfig:
         required: true
@@ -64,8 +67,8 @@ jobs:
       id: install
       continue-on-error: true
       run: |
-        helm install ${{ inputs.release }} -f ${{ inputs.value-file }} ${{ inputs.chart }} --namespace ${{ inputs.namespace }}
+        helm install ${{ inputs.release }} -f ${{ inputs.value-file }} ${{ inputs.chart }} --namespace ${{ inputs.namespace }} ${{inputs.extra-args}}
 
     - name: Upgrade
       run: |
-        helm upgrade ${{ inputs.release }} -f ${{ inputs.value-file }} ${{ inputs.chart }} --namespace ${{ inputs.namespace }}
+        helm upgrade ${{ inputs.release }} -f ${{ inputs.value-file }} ${{ inputs.chart }} --namespace ${{ inputs.namespace }} ${{inputs.extra-args}}
