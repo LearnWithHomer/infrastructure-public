@@ -70,9 +70,15 @@ jobs:
     - name: Install
       id: install
       continue-on-error: true
+      env:
+        DB_USERNAME: ${{secrets.db_username}}
+        DB_PASSWORD: ${{secrets.db_password}}
       run: |
         helm install ${{ inputs.release }} -f ${{ inputs.value-file }} ${{ inputs.chart }} --namespace ${{ inputs.namespace }} ${{inputs.extra-args}}
 
     - name: Upgrade
+      env:
+        DB_USERNAME: ${{secrets.db_username}}
+        DB_PASSWORD: ${{secrets.db_password}}
       run: |
         helm upgrade ${{ inputs.release }} -f ${{ inputs.value-file }} ${{ inputs.chart }} --namespace ${{ inputs.namespace }} ${{inputs.extra-args}}
