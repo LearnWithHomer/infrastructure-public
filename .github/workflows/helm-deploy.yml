@@ -30,6 +30,10 @@ on:
     secrets:
       kubeconfig:
         required: true
+      db_username:
+        required: false
+      db_password:
+        required: false
 
 jobs:
   deploy_to_k8s:
