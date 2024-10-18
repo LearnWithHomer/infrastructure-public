@@ -30,9 +30,9 @@ on:
     secrets:
       kubeconfig:
         required: true
-      db_username:
+      args_secret_1:
         required: false
-      db_password:
+      args_secret_2:
         required: false
 
 jobs:
@@ -71,14 +71,14 @@ jobs:
       id: install
       continue-on-error: true
       env:
-        DB_USERNAME: ${{secrets.db_username}}
-        DB_PASSWORD: ${{secrets.db_password}}
+        ARGS_SECRET_1: ${{secrets.args_secret_1}}
+        ARGS_SECRET_2: ${{secrets.args_secret_2}}
       run: |
         helm install ${{ inputs.release }} -f ${{ inputs.value-file }} ${{ inputs.chart }} --namespace ${{ inputs.namespace }} ${{inputs.extra-args}}
 
     - name: Upgrade
       env:
-        DB_USERNAME: ${{secrets.db_username}}
-        DB_PASSWORD: ${{secrets.db_password}}
+        ARGS_SECRET_1: ${{secrets.args_secret_1}}
+        ARGS_SECRET_2: ${{secrets.args_secret_2}}
       run: |
         helm upgrade ${{ inputs.release }} -f ${{ inputs.value-file }} ${{ inputs.chart }} --namespace ${{ inputs.namespace }} ${{inputs.extra-args}}
