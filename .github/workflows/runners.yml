@@ -1,0 +1,84 @@
+name: Deploy Custom Runners
+
+on:
+  workflow_call:
+    inputs:
+      runs_on:
+        required: false
+        type: string
+        default: 'self-hosted' 
+      ecr_role_arn:
+        required: false
+        type: string
+        default: 'arn:aws:iam::521531168981:role/gha-ecr-exec'
+      checkout_dir:
+        required: true
+        type: string
+    #   release:
+    #     required: true
+    #     type: string
+    #   chart:
+    #     required: true
+    #     type: string
+    #   namespace:
+    #     required: false
+    #     type: string
+    #     default: 'default' 
+    #   value-file:
+    #     required: true
+    #     type: string
+    #   add-repo:
+    #     required: true
+    #     type: string 
+    #   extra-args:
+    #     required: false
+    #     type: string
+    # secrets:
+    #   kubeconfig:
+    #     required: true
+    #   args_secret_1:
+    #     required: false
+    #   args_secret_2:
+    #     required: false
+
+jobs:
+
+  build-and-push-image:
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/build-and-push-image-to-ecr.yml@main
+    with:
+      role_arn: arn:aws:iam::521531168981:role/gha-ecr-exec
+    secrets:
+      ecr_repo: ${{ inputs.ecr_role_arn }}
+      aws_region: "us-east-1"
+      gh_pkg_token: "default"
+      checkout_dir: ${{ inputs.checkout_dir }}
+
+  # deploy-to-k8s:
+  #   needs: build-and-push-image
+  #   uses: LearnWithHomer/infrastructure-public/.github/workflows/deploy-to-k8s.yml@main
+  #   with:
+  #     app_env: ${{ inputs.checkout_dir }}
+  #     rel_helm_path: k8s/helm-chart/devops*
+  #   secrets:
+  #     kubeconfig: ${{ secrets.INFRASTRUCTURE_KUBECONFIG }}
+  #     ecr_repo: ${{ secrets.ECR_REPOSITORY }}
+
+  slack-notify-success:
+    if: ${{ success() }}
+    needs: [build-and-push-image, deploy-to-k8s]
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/slack-notify-success.yml@main
+    with:
+      app_env: ${{ inputs.checkout_dir }}
+      slack_channel: devops-production-alerts
+    secrets:
+      slack_bot_token: ${{ secrets.CODESPARK_SLACK_BOT_TOKEN }}
+
+  slack-notify-failure:
+    if: ${{ failure() }}
+    needs: [build-and-push-image, deploy-to-k8s]
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/slack-notify-failure.yml@main
+    with:
+      app_env: ${{ inputs.checkout_dir }}
+      slack_channel: devops-production-alerts
+    secrets:
+      slack_bot_token: ${{ secrets.CODESPARK_SLACK_BOT_TOKEN }}
