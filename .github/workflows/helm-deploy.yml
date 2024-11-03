@@ -22,7 +22,7 @@ on:
         required: true
         type: string
       add-repo:
-        required: true
+        required: false
         type: string 
       extra-args:
         required: false
