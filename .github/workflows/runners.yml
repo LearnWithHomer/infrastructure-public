@@ -13,6 +13,10 @@ on:
       checkout_dir:
         required: true
         type: string
+      runs_on:
+        required: false
+        type: string
+        default: 'self-hosted'
 
 jobs:
 
@@ -20,6 +24,7 @@ jobs:
     uses: LearnWithHomer/infrastructure-public/.github/workflows/build-and-push-image-to-ecr.yml@main
     with:
       role_arn: ${{ inputs.ecr_role_arn }}
+      runs_on: ${{ inputs.runs_on }}
     secrets:
       ecr_repo: ${{ inputs.ecr_repo }}
       aws_region: "us-east-1"
