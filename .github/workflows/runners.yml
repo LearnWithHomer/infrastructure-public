@@ -52,6 +52,19 @@ jobs:
       gh_pkg_token: "default"
       checkout_dir: ${{ inputs.checkout_dir }}
 
+  helm:
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/helm-deploy.yml@main
+    with:
+      release: 'git-runner-${{ inputs.checkout_dir }}'
+      runs_on: self-hosted
+      chart: actions-runner-controller/actions-runner-controller
+      value-file: ./${{ inputs.checkout_dir }}/values.yaml
+      namespace: actions-runner-system
+      extra-args: --set authSecret.github_token=$ARGS_SECRET_1
+    secrets:
+      kubeconfig: ${{ secrets.INFRASTRUCTURE_KUBECONFIG }}
+      args_secret_1: ${{secrets.LP_RUNNER_TOKEN }}
+
   # deploy-to-k8s:
   #   needs: build-and-push-image
   #   uses: LearnWithHomer/infrastructure-public/.github/workflows/deploy-to-k8s.yml@main
