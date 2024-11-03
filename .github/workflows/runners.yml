@@ -64,7 +64,7 @@ jobs:
 
   slack-notify-success:
     if: ${{ success() }}
-    needs: [build-and-push-image, deploy-to-k8s]
+    needs: [build-and-push-image]
     uses: LearnWithHomer/infrastructure-public/.github/workflows/slack-notify-success.yml@main
     with:
       app_env: ${{ inputs.checkout_dir }}
@@ -74,7 +74,7 @@ jobs:
 
   slack-notify-failure:
     if: ${{ failure() }}
-    needs: [build-and-push-image, deploy-to-k8s]
+    needs: [build-and-push-image]
     uses: LearnWithHomer/infrastructure-public/.github/workflows/slack-notify-failure.yml@main
     with:
       app_env: ${{ inputs.checkout_dir }}
