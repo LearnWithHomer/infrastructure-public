@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       ecr_role_arn:
-        required: true
+        required: false
         type: string
         default: 'arn:aws:iam::521531168981:role/gha-ecr-exec'
       ecr_repo:
