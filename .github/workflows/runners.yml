@@ -25,6 +25,7 @@ jobs:
     with:
       role_arn: ${{ inputs.ecr_role_arn }}
       runs_on: ${{ inputs.runs_on }}
+      working-directory: './${{ inputs.checkout_dir }}'
     secrets:
       ecr_repo: ${{ inputs.ecr_repo }}
       aws_region: "us-east-1"
