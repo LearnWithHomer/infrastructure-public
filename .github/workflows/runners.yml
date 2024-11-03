@@ -10,7 +10,6 @@ on:
       ecr_repo:
         required: true
         type: string
-        default: 'arn:aws:iam::521531168981:role/gha-ecr-exec'
       checkout_dir:
         required: true
         type: string
