@@ -10,6 +10,10 @@ on:
         required: false
         type: string
         default: 'self-hosted'
+      working-directory:
+        required: false
+        type: string
+        default: '.'
     secrets:
       aws_region:
         required: true
@@ -79,6 +83,7 @@ jobs:
         fi
 
     - name: Build, tag, and push image to Amazon ECR
+      working-directory: ${{ inputs.working-directory }}
       id: build_image
       if: env.TAG_EXISTS == 'false'
       env:
