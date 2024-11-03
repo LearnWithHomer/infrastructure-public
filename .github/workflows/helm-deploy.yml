@@ -74,11 +74,11 @@ jobs:
         ARGS_SECRET_1: ${{secrets.args_secret_1}}
         ARGS_SECRET_2: ${{secrets.args_secret_2}}
       run: |
-        helm install ${{ inputs.release }} -f ${{ inputs.value-file }} ${{ inputs.chart }} --namespace ${{ inputs.namespace }} ${{inputs.extra-args}}
+        helm install ${{ inputs.release }} -f ${{ inputs.value-file }} ${{ inputs.chart }} --namespace ${{ inputs.namespace }} ${{inputs.extra-args}} --wait
 
     - name: Upgrade
       env:
         ARGS_SECRET_1: ${{secrets.args_secret_1}}
         ARGS_SECRET_2: ${{secrets.args_secret_2}}
       run: |
-        helm upgrade ${{ inputs.release }} -f ${{ inputs.value-file }} ${{ inputs.chart }} --namespace ${{ inputs.namespace }} ${{inputs.extra-args}}
+        helm upgrade ${{ inputs.release }} -f ${{ inputs.value-file }} ${{ inputs.chart }} --namespace ${{ inputs.namespace }} ${{inputs.extra-args}} --wait
