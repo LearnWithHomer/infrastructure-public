@@ -3,12 +3,12 @@ name: Deploy Custom Runners
 on:
   workflow_call:
     inputs:
-      runs_on:
-        required: false
-        type: string
-        default: 'self-hosted' 
       ecr_role_arn:
-        required: false
+        required: true
+        type: string
+        default: 'arn:aws:iam::521531168981:role/gha-ecr-exec'
+      ecr_repo:
+        required: true
         type: string
         default: 'arn:aws:iam::521531168981:role/gha-ecr-exec'
       checkout_dir:
@@ -46,9 +46,9 @@ jobs:
   build-and-push-image:
     uses: LearnWithHomer/infrastructure-public/.github/workflows/build-and-push-image-to-ecr.yml@main
     with:
-      role_arn: arn:aws:iam::521531168981:role/gha-ecr-exec
+      role_arn: ${{ inputs.ecr_role_arn }}
     secrets:
-      ecr_repo: ${{ inputs.ecr_role_arn }}
+      ecr_repo: ${{ inputs.ecr_repo }}
       aws_region: "us-east-1"
       gh_pkg_token: "default"
       checkout_dir: ${{ inputs.checkout_dir }}
