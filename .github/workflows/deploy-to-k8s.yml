@@ -88,7 +88,23 @@ jobs:
 
         echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
 
-        helm template . -f ./values.yaml -f ./values-$APP_ENV.yaml --set imageTag=$IMAGE_TAG-$CI_SHA_SHORT --set replicas=$REPLICAS > ${{ runner.temp }}/manifest.yaml
+        echo " identifier: ${{ github.event.inputs.identifier }}"
+
+        if [ -n ${{ github.event.inputs.identifier }} ]; then
+          echo ">> Using identifier"
+          helm template . -f ./values.yaml \
+            --set imageTag=$IMAGE_TAG-$CI_SHA_SHORT \
+            --set replicas=$REPLICAS \
+            --set identifier=${{ github.event.inputs.identifier }} \
+            > ${{ runner.temp }}/manifest.yaml
+        else
+          echo ">> Not using identifier"
+          helm template . -f ./values.yaml -f ./values-$APP_ENV.yaml \
+            --set imageTag=$IMAGE_TAG-$CI_SHA_SHORT \
+            --set replicas=$REPLICAS \
+            > ${{ runner.temp }}/manifest.yaml
+        fi
+
         ls ${{ runner.temp }}
         echo "Done: Generated manifest!"
 
