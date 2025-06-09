@@ -1,0 +1,19 @@
+name: Run Security Scan
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  run-scan:
+    uses: LearnWithHomer/infrastructure-public/.github/workflows/security.yml@main
+    with:
+      scan_type: all             # Options: all, trufflehog, checkov
+      output_name: scan-results.txt
