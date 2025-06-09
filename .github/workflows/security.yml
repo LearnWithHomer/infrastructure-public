@@ -1,0 +1,25 @@
+name: Security Scan
+
+on:
+  workflow_call:
+    inputs:
+      output_name:
+        required: false
+        type: string
+        default: "scan-results.txt"
+      scan_type:
+        required: false
+        type: string
+        default: "all"  # Options: all, trufflehog, checkov
+
+jobs:
+  security-scan:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install TruffleHog
+        if: ${{ inputs.scan_type == 'all' || inputs.scan_type == 'trufflehog' }}
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin || true
