@@ -104,35 +104,120 @@ jobs:
       aws-region: ${{ inputs.aws-region }}
       role-arn: ${{ inputs.role-arn }}
       cli-commands: |
+        set -euo pipefail
+
         ACTION="${{ needs.prepare-inputs.outputs.action }}"
         CLUSTER_LIST="${{ needs.prepare-inputs.outputs.cluster_list }}"
-        
-        # Function to manage a single cluster
-        manage_cluster() {
-          local identifier=$1
-          
-          if [ "$ACTION" = "start" ]; then
-            echo "Attempting to start DB cluster $identifier"
-            if aws rds start-db-cluster --db-cluster-identifier $identifier 2>&1 | grep -q "InvalidDBClusterState"; then
-              echo "Warning: Cluster $identifier is already running or in an invalid state for starting."
-            else
-              echo "Successfully started DB cluster $identifier"
-            fi
-          elif [ "$ACTION" = "stop" ]; then
-            echo "Attempting to stop DB cluster $identifier"
-            if aws rds stop-db-cluster --db-cluster-identifier $identifier 2>&1 | grep -q "InvalidDBClusterState"; then
-              echo "Warning: Cluster $identifier is already stopped or in an invalid state for stopping."
-            else
-              echo "Successfully stopped DB cluster $identifier"
-            fi
-          else
-            echo "Error: Invalid action specified. Use 'start' or 'stop'."
-            exit 1
+
+        echo "Action: $ACTION"
+        echo "Targets: $CLUSTER_LIST"
+
+        ensure_target_type() {
+          local id="$1"
+          if aws rds describe-db-clusters --db-cluster-identifier "$id" >/dev/null 2>&1; then
+            echo "type=cluster"
+            return 0
           fi
+          if aws rds describe-db-instances --db-instance-identifier "$id" >/dev/null 2>&1; then
+            echo "type=instance"
+            return 0
+          fi
+          echo "type=unknown"
+          return 1
         }
 
-        # Main execution
-        IFS=',' read -ra CLUSTER_ARRAY <<< "$CLUSTER_LIST"
-        for cluster in "${CLUSTER_ARRAY[@]}"; do
-          manage_cluster "$cluster"
+        start_cluster() {
+          local id="$1"
+          set +e
+          out=$(aws rds start-db-cluster --db-cluster-identifier "$id" 2>&1)
+          rc=$?
+          set -e
+          echo "$out"
+          if [ $rc -eq 0 ]; then
+            echo "Started cluster $id"
+            return 0
+          fi
+          if echo "$out" | grep -q "InvalidDBClusterState"; then
+            echo "Cluster $id already running or not startable."
+            return 0
+          fi
+          echo "ERROR starting cluster $id"
+          return $rc
+        }
+
+        stop_cluster() {
+          local id="$1"
+          set +e
+          out=$(aws rds stop-db-cluster --db-cluster-identifier "$id" 2>&1)
+          rc=$?
+          set -e
+          echo "$out"
+          if [ $rc -eq 0 ]; then
+            echo "Stopped cluster $id"
+            return 0
+          fi
+          if echo "$out" | grep -q "InvalidDBClusterState"; then
+            echo "Cluster $id already stopped or not stoppable."
+            return 0
+          fi
+          echo "ERROR stopping cluster $id"
+          return $rc
+        }
+
+        start_instance() {
+          local id="$1"
+          set +e
+          out=$(aws rds start-db-instance --db-instance-identifier "$id" 2>&1)
+          rc=$?
+          set -e
+          echo "$out"
+          if [ $rc -eq 0 ]; then
+            echo "Started instance $id"
+            return 0
+          fi
+          if echo "$out" | grep -q "InvalidDBInstanceState"; then
+            echo "Instance $id already running or not startable."
+            return 0
+          fi
+          echo "ERROR starting instance $id"
+          return $rc
+        }
+
+        stop_instance() {
+          local id="$1"
+          set +e
+          out=$(aws rds stop-db-instance --db-instance-identifier "$id" 2>&1)
+          rc=$?
+          set -e
+          echo "$out"
+          if [ $rc -eq 0 ]; then
+            echo "Stopped instance $id"
+            return 0
+          fi
+          if echo "$out" | grep -q "InvalidDBInstanceState"; then
+            echo "Instance $id already stopped or not stoppable."
+            return 0
+          fi
+          echo "ERROR stopping instance $id"
+          return $rc
+        }
+
+        IFS=',' read -ra TARGETS <<< "$CLUSTER_LIST"
+        for id in "${TARGETS[@]}"; do
+          id="${id//[[:space:]]/}"
+          if [ -z "$id" ]; then continue; fi
+          echo "Processing $id ..."
+          type_str=$(ensure_target_type "$id" || true)
+          case "$type_str" in
+            type=cluster)
+              if [ "$ACTION" = "start" ]; then start_cluster "$id"; else stop_cluster "$id"; fi
+              ;;
+            type=instance)
+              if [ "$ACTION" = "start" ]; then start_instance "$id"; else stop_instance "$id"; fi
+              ;;
+            *)
+              echo "ERROR: $id is neither a DB cluster nor a DB instance identifier"
+              exit 1
+              ;;
+          esac
         done
