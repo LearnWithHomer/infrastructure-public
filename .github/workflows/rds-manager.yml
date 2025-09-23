@@ -227,7 +227,7 @@ jobs:
           id="${id//[[:space:]]/}"
           if [ -z "$id" ]; then continue; fi
           echo "Processing $id ..."
-          type_str=$(ensure_target_type "$id" || true)
+          type_str=$(ensure_target_type "$id" | tail -n1 || true)
           case "$type_str" in
             type=cluster)
               if [ "$ACTION" = "start" ]; then start_cluster "$id"; else stop_cluster "$id"; fi
