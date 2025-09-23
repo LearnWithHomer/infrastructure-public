@@ -114,11 +114,22 @@ jobs:
 
         ensure_target_type() {
           local id="$1"
-          if aws rds describe-db-clusters --db-cluster-identifier "$id" >/dev/null 2>&1; then
+          local out rc
+          # Try cluster by identifier
+          set +e
+          out=$(aws rds describe-db-clusters --db-cluster-identifier "$id" 2>&1)
+          rc=$?
+          set -e
+          if [ $rc -eq 0 ]; then
             echo "type=cluster"
             return 0
           fi
-          if aws rds describe-db-instances --db-instance-identifier "$id" >/dev/null 2>&1; then
+          # Try instance by identifier
+          set +e
+          out=$(aws rds describe-db-instances --db-instance-identifier "$id" 2>&1)
+          rc=$?
+          set -e
+          if [ $rc -eq 0 ]; then
             echo "type=instance"
             return 0
           fi
