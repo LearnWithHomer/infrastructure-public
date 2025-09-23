@@ -115,24 +115,33 @@ jobs:
         ensure_target_type() {
           local id="$1"
           local out rc
-          # Try cluster by identifier
+          
+          echo "Checking if $id is a cluster..."
           set +e
           out=$(aws rds describe-db-clusters --db-cluster-identifier "$id" 2>&1)
           rc=$?
           set -e
           if [ $rc -eq 0 ]; then
+            echo "Found as cluster"
             echo "type=cluster"
             return 0
+          else
+            echo "Cluster check failed: $out"
           fi
-          # Try instance by identifier
+          
+          echo "Checking if $id is an instance..."
           set +e
           out=$(aws rds describe-db-instances --db-instance-identifier "$id" 2>&1)
           rc=$?
           set -e
           if [ $rc -eq 0 ]; then
+            echo "Found as instance"
             echo "type=instance"
             return 0
+          else
+            echo "Instance check failed: $out"
           fi
+          
           echo "type=unknown"
           return 1
         }
