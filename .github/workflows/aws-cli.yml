@@ -17,8 +17,23 @@ jobs:
   aws-cli-commands:
     runs-on: self-hosted
     steps:
-      - name: Install AWS CLI
-        uses: aws-actions/setup-aws-cli@v4
+      - name: Ensure AWS CLI is available
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v aws >/dev/null 2>&1; then
+            echo "Installing AWS CLI v2..."
+            curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip -q awscliv2.zip
+            if command -v sudo >/dev/null 2>&1; then
+              sudo ./aws/install || true
+            else
+              ./aws/install --bin-dir "$HOME/.local/bin" --install-dir "$HOME/.local/aws-cli" --update || true
+              echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+              export PATH="$HOME/.local/bin:$PATH"
+            fi
+          fi
+          aws --version
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
