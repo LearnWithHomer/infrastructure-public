@@ -44,6 +44,7 @@ jobs:
       - name: Execute AWS CLI commands
         shell: bash
         run: |
-          set -euo pipefail
+          set -eo pipefail
           echo "AWS CLI version: $(aws --version 2>&1)"
-          bash -euxo pipefail -c '${{ inputs.cli-commands }}'
+          # Run provided commands without -u to avoid failing on unset vars in user scripts
+          bash -exo pipefail -c '${{ inputs.cli-commands }}'
