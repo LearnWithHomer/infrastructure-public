@@ -17,6 +17,9 @@ jobs:
   aws-cli-commands:
     runs-on: self-hosted
     steps:
+      - name: Install AWS CLI
+        uses: aws-actions/setup-aws-cli@v4
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -24,5 +27,8 @@ jobs:
           aws-region: ${{ inputs.aws-region }}
 
       - name: Execute AWS CLI commands
+        shell: bash
         run: |
-          ${{ inputs.cli-commands }}
+          set -euo pipefail
+          echo "AWS CLI version: $(aws --version 2>&1)"
+          bash -euxo pipefail -c '${{ inputs.cli-commands }}'
